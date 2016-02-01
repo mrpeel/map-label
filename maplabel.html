@@ -1,0 +1,151 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <title>Map Label Utility Library Example</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js"></script>
+    <script src="maplabel.js"></script>
+
+    <script>
+        function init() {
+            var mapLabels = [];
+            var markers = [];
+            
+            var myLatlng = new google.maps.LatLng(-37.813942, 144.9711861);
+            var myOptions = {
+                zoom: 13,
+                center: myLatlng,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            };
+
+            var map = new google.maps.Map(document.getElementById('map'), myOptions);
+
+            var infoWindow = new google.maps.InfoWindow({
+                content: '<div></div>'
+            });
+            
+            for(var mapCounter = 0; mapCounter <= 5; mapCounter++) {
+                
+                var mapLabel = new MapLabel({
+                    text: 'SMES Test ' + mapCounter,
+                    position: new google.maps.LatLng(-37.813942 + (mapCounter*0.005), 144.9711861 + (mapCounter*0.005)),
+                    map: map,
+                    fontSize: 12,
+                    align: 'center'
+                });
+                
+                mapLabels.push(mapLabel);
+
+                var marker = new google.maps.Marker({
+                    position: new google.maps.LatLng(-37.813942 + (mapCounter*0.005), 144.9711861 + (mapCounter*0.005)),
+                    title:'SMES Test ' + mapCounter ,
+                    map: map,
+                    draggable: false,
+                    infoContent: '<div>SMES Test ' + mapCounter + '</div>'
+                });
+
+
+                 marker.addListener('click', function() {
+                     infoWindow.setContent( this.infoContent );		   
+                     infoWindow.open( map, this );
+                     //infowindow.open(map, marker);
+                  });
+                
+                markers.push(marker);
+            }
+
+
+            var changeAlign = document.getElementById('change-align');
+            google.maps.event.addDomListener(changeAlign, 'click', function() {
+                for(var labelCounter = 0; labelCounter < mapLabels.length;labelCounter++) {
+                    mapLabels[labelCounter].set('align', document.getElementById('align').value);
+                }
+            });
+
+            var changeFont = document.getElementById('change-font');
+            google.maps.event.addDomListener(changeFont, 'click', function() {
+                for(var labelCounter = 0; labelCounter < mapLabels.length;labelCounter++) {
+                    mapLabels[labelCounter].set('fontSize', document.getElementById('font').value);
+                }
+            });
+
+            var changeColor = document.getElementById('change-color');
+            google.maps.event.addDomListener(changeColor, 'click', function() {
+                for(var labelCounter = 0; labelCounter < mapLabels.length;labelCounter++) {
+                    mapLabels[labelCounter].set('fontColor', document.getElementById('font-color').value);
+                }
+            });
+
+
+            var changeStrokeColor = document.getElementById('change-strokecolor');
+            google.maps.event.addDomListener(changeStrokeColor, 'click', function() {
+                for(var labelCounter = 0; labelCounter < mapLabels.length;labelCounter++) {
+                    mapLabels[labelCounter].set('strokeColor',
+                    document.getElementById('stroke-color').value);
+                }
+            });
+
+            var showHide = document.getElementById('show-hide');
+            google.maps.event.addDomListener(showHide, 'click', function() {
+                for(var labelCounter = 0; labelCounter < mapLabels.length;labelCounter++) {
+                    if(mapLabels[labelCounter].get('map')===null) {
+                        mapLabels[labelCounter].set('map', map);
+                    } else {
+                        mapLabels[labelCounter].set('map', null);    
+                    }                    
+                }
+                
+                
+            });
+
+        }
+
+        google.maps.event.addDomListener(window, 'load', init);
+
+    </script>
+
+</head>
+
+<body>
+    <h1>Map Label Utility Library</h1>
+    <div id="map" style="width: 500px; height: 500px; float: left"></div>
+
+        <div style="clear: both; padding-top: 10px;">
+        <label>Show / Hide Labels</label>
+        <button id="show-hide">show / hide labels</button>
+    </div>
+
+    <div>
+        <label>Font Size:</label>
+        <input type="text" id="font" value="15">px
+        <button id="change-font">Change Size</button>
+    </div>
+    <div>
+        <label>Font Color:</label>
+        <input type="text" id="font-color" value="#ff0000">
+        <button id="change-color">Change Color</button>
+    </div>
+    <div>
+        <label>Stroke Color:</label>
+        <input type="text" id="stroke-color" value="#8ada55">
+        <button id="change-strokecolor">Change Color</button>
+        <div>
+            <label>Alignment:</label>
+            <select id="align">
+                <option value="left">Left</option>
+                <option value="center" selected>Center</option>
+                <option value="right">Right</option>
+            </select>
+            <button id="change-align">Align</button>
+        </div>
+</body>
+
+</html>
