@@ -2,7 +2,7 @@
     set-up markers and and infor windows
 */
 
-/*global  google*/
+/*global  google, document, navigator, console, MapLabel*/
 
 /** 
  * 
@@ -14,7 +14,7 @@ var SMESGMap = function (elementId, options) {
 
     var melbourneCenter = new google.maps.LatLng(-37.813942, 144.9711861);
 
-
+    this.setupMapStyles();
     this.mapOptions = options.mapOptions || {
         center: melbourneCenter,
         zoom: 15,
@@ -32,7 +32,7 @@ var SMESGMap = function (elementId, options) {
         },
         panControl: false,
         rotateControl: false,
-        styles: iovation
+        styles: this.mapStyles.iovation
     };
 
     this.map = new google.maps.Map(document.getElementById(elementId), this.mapOptions);
@@ -51,12 +51,22 @@ var SMESGMap = function (elementId, options) {
         this.setZoomLevel();
     });
 
-    google.maps.event.addListener(this.map, 'click', function (e) {
 
-        for (var i = 0; i < this.infoWindows.length; i++) {
-            this.infoWindows[i].close();
-        }
-    });
+    if (options.idle) {
+        google.maps.event.addListener(this.map, 'idle', function (e) {
+            if (e === undefined) {
+                e = this;
+            }
+
+            options.idle.apply(this, [e]);
+
+        });
+
+    }
+
+
+    google.maps.event.addListener(this.map, 'idle', this.refreshIcons);
+
 
 
 };
@@ -77,11 +87,7 @@ SMESGMap.prototype.geoLocate = function () {
 
 };
 
-SMESGMap.prototype.setIdleFunction = function (idleFunction) {
-    "use strict";
 
-    google.maps.event.addListener(this.map, 'idle', idleFunction);
-};
 
 SMESGMap.prototype.getZoom = function () {
     "use strict";
@@ -105,16 +111,9 @@ var mapLabel = new MapLabel({
     align: 'center'
 });
 
-mapLabels.push(mapLabel);
-
-var icon = {
-    url: "scn-ahd-pm.svg",
-    size: new google.maps.Size(this.markerSize, 12),
-    scaledSize: new google.maps.Size(12, 12)
-};
 
 
-SMESGMap.prototype.addMarker = function (markerTitle, markerLocation, markerIcon, infoWindowContent) {
+SMESGMap.prototype.addMarker = function (markerTitle, markerLat, markerLng, markerIcon, infoWindowContent) {
     "use strict";
 
     //Capture local reference of map for use in click functions
@@ -128,7 +127,7 @@ SMESGMap.prototype.addMarker = function (markerTitle, markerLocation, markerIcon
 
 
     var marker = new google.maps.Marker({
-        position: new google.maps.LatLng(markerLocation.lat, markerLocation.lng),
+        position: new google.maps.LatLng(markerLat, markerLng),
         title: markerTitle,
         map: this.map,
         draggable: false,
@@ -146,12 +145,12 @@ SMESGMap.prototype.addMarker = function (markerTitle, markerLocation, markerIcon
 
 };
 
-SMESGMap.prototype.addLabel = function (labelContent, markerLocation) {
+SMESGMap.prototype.addLabel = function (labelContent, labelLat, labelLng) {
 
 
     var mapLabel = new MapLabel({
         text: labelContent,
-        position: new google.maps.LatLng(markerLocation.lat, markerLocation.lng),
+        position: new google.maps.LatLng(labelLat, labelLng),
         map: this.map,
         minZoom: 17,
         fontSize: 12,
@@ -231,31 +230,6 @@ SMESGMap.prototype.showLabels = function () {
 
 
 
-var var_pin = 'pin-blue.png';
-this.markers.markerId = new google.maps.Marker({
-    position: var_location,
-    map: var_map,
-    icon: var_pin,
-    title: "Venice"
-});
-
-var var_map = new google.maps.Map(document.getElementById("map-container"),
-    var_mapoptions);
-
-var_marker.setMap(var_map);
-
-var var_infowindow = new google.maps.InfoWindow({
-    content: contentString
-});
-
-
-google.maps.event.addListener(var_marker, 'click', function () {
-    var_infowindow.open(var_map, var_marker);
-});
-};
-
-
-
 SMESGMap.prototype.reverseGeocode = function (cLat, cLng) {
     "use strict";
 
@@ -284,7 +258,7 @@ SMESGMap.prototype.reverseGeocode = function (cLat, cLng) {
     });
 };
 
-SMESGMap.prototype.setUpAutoComplete(elementId) {
+SMESGMap.prototype.setUpAutoComplete = function (elementId) {
 
     input = document.getElementById(elementId);
 
@@ -633,7 +607,7 @@ SMESGMap.prototype.setupMapStyles = function () {
     }]
 }],
 
-        shiftWorker: = [{
+        shiftWorker: [{
             "stylers": [{
                 "saturation": -100
     }, {
@@ -1061,7 +1035,7 @@ SMESGMap.prototype.setupMapStyles = function () {
     }, {
                 "gamma": "5.37"
     }]
-}];
+}]
     };
 
 };
