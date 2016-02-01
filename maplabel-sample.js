@@ -33,10 +33,9 @@ function init() {
         mapLabels.push(mapLabel);
 
         var icon = {
-            url: "scn-gda94-ahd-pm.svg",
-            //anchor: new google.maps.Point(20, 20),
-            size: new google.maps.Size(20, 30),
-            scaledSize: new google.maps.Size(20, 30)
+            url: "scn-ahd-pm.svg",
+            size: new google.maps.Size(12, 12),
+            scaledSize: new google.maps.Size(12, 12)
         };
 
         var marker = new google.maps.Marker({
@@ -140,7 +139,7 @@ function checkandUpdateIcons() {
         }
 
         if (zoomLevel >= 14) {
-            markerSize = zoomLevel * 1.6;
+            markerSize = zoomLevel;
 
             //Now refresh marker size for all markers
             for (var markerCounter = 0; markerCounter < mapLabels.length; markerCounter++) {
@@ -159,8 +158,8 @@ function updateMarkerIconSize(marker, markerSize) {
     console.log(marker.icon);
     var icon = marker.icon;
 
-    icon.scaledSize = new google.maps.Size(markerSize, markerSize * 1.5);
-    icon.size = new google.maps.Size(markerSize, markerSize * 1.5);
+    icon.scaledSize = new google.maps.Size(markerSize, markerSize);
+    icon.size = new google.maps.Size(markerSize, markerSize);
     marker.setIcon(icon);
 
 }
