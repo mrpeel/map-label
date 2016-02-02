@@ -113,7 +113,7 @@ SMESGMap.prototype.getZoom = function () {
  * @return {None}.
  */
 
-SMESGMap.prototype.addMarker = function (markerTitle, markerLat, markerLng, markerIcon, infoWindowContent) {
+SMESGMap.prototype.addMarker = function (markerTitle, markerLat, markerLng, markerIcon, infoWindowContent, eventListeners) {
     "use strict";
 
     //Capture local reference of map for use in click functions
@@ -132,16 +132,29 @@ SMESGMap.prototype.addMarker = function (markerTitle, markerLat, markerLng, mark
         map: self.map,
         draggable: false,
         icon: icon,
+        animation: google.maps.Animation.DROP,
         infoContent: infoWindowContent
     });
 
 
+
     marker.addListener('click', function () {
-        self.infoWindow.setContent(self.infoContent);
-        self.infoWindow.open(self.map, self);
+        self.infoWindow.setContent(infoWindowContent);
+        self.infoWindow.open(self.map, this);
+
+        if (eventListeners && eventListeners.click) {
+            eventListeners.click.apply();
+        }
+
+        if (eventListeners && eventListeners.domready) {
+            eventListeners.domready.apply(this);
+        }
+
     });
 
+
     self.markers.push(marker);
+
 
 };
 
@@ -154,12 +167,12 @@ SMESGMap.prototype.addLabel = function (labelContent, labelLat, labelLng) {
         text: labelContent,
         position: new google.maps.LatLng(labelLat, labelLng),
         map: self.map,
-        minZoom: 17,
+        minZoom: 19,
         fontFamily: "'Muli', sans-serif",
         strokeWeight: 6,
-        fontColor: 'rgba(0, 0, 0, 0.87)',
-        strokeColor: 'rgba(255, 255, 255, 0.87)',
-        fontSize: 13,
+        fontColor: 'rgba(28, 43, 139, 0.87)',
+        strokeColor: 'rgba(225, 225, 225, 0.87)',
+        fontSize: 12,
         align: 'center'
     });
 
@@ -193,7 +206,7 @@ SMESGMap.prototype.setZoomLevel = function () {
 
     //Reset zoomLevel
     self.zoomLevel = self.map.getZoom();
-    self.markerSize = self.zoomLevel + 1;
+    self.markerSize = self.zoomLevel;
 
 };
 
@@ -206,7 +219,7 @@ SMESGMap.prototype.resizeIcons = function () {
     //Loop through the markers and re-szie their icons
     for (var markerCounter = 0; markerCounter < self.markers.length || 0; markerCounter++) {
         //Retrieve the marker icon and re-set its size
-        icon = self.markers[markerCounter];
+        icon = self.markers[markerCounter].icon;
         newSize = self.markerSize || 14;
 
         icon.scaledSize = new google.maps.Size(newSize, newSize);
@@ -328,12 +341,12 @@ SMESGMap.prototype.setUpAutoComplete = function (elementId) {
             self.map.fitBounds(place.geometry.viewport);
         } else {
             self.map.setCenter(place.geometry.location);
-            self.setZoom(17); // Why 17? Because it will likely be close enough to load marks.
+            self.map.setZoom(17); // Why 17? Because it will likely be close enough to load marks.
         }
 
         //Add map icon
         searchMarker.setIcon( /** @type {google.maps.Icon} */ ({
-            url: place.icon,
+            //url: place.icon,
             size: new google.maps.Size(71, 71),
             origin: new google.maps.Point(0, 0),
             anchor: new google.maps.Point(17, 34),

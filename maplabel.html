@@ -16,49 +16,20 @@
     <script src="maplabel.min.js"></script>
     <script src="smes-map.js"></script>
     <script src="smes-map-test.js"></script>
+    <script src="central-melbourne.js"></script>
 
 
 
 </head>
 
 <body>
-    <h1>Map Label Utility Library</h1>
+    <h1>SMES Map Class POC </h1>
+    <div>
+        <input id="autoComplete" style="width: 300px; height: 20px; float: left" />
+    </div>
     <div id="map" style="width: 800px; height: 600px; float: left"></div>
 
-    <div style="clear: both; padding-top: 10px;">
-        <label>Show / Hide Labels</label>
-        <button id="show-hide-labels">show / hide labels</button>
-    </div>
 
-    <div style="clear: both; padding-top: 10px;">
-        <label>Show / Hide Markers</label>
-        <button id="show-hide-markers">show / hide markers</button>
-    </div>
-
-    <div>
-        <label>Font Size:</label>
-        <input type="text" id="font" value="15">px
-        <button id="change-font">Change Size</button>
-    </div>
-    <div>
-        <label>Font Color:</label>
-        <input type="text" id="font-color" value="#ff0000">
-        <button id="change-color">Change Color</button>
-    </div>
-    <div>
-        <label>Stroke Color:</label>
-        <input type="text" id="stroke-color" value="#8ada55">
-        <button id="change-strokecolor">Change Color</button>
-        <div>
-            <label>Alignment:</label>
-            <select id="align">
-                <option value="left">Left</option>
-                <option value="center" selected>Center</option>
-                <option value="right">Right</option>
-            </select>
-            <button id="change-align">Align</button>
-        </div>
-    </div>
 </body>
 <script>
     setupMap();
