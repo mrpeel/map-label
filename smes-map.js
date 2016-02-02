@@ -2,7 +2,7 @@
     set-up markers and and infor windows
 */
 
-/*global  google, document, navigator, console, MapLabel*/
+/*global Promise, google, document, navigator, console, MapLabel*/
 
 /** 
  * 
@@ -15,7 +15,10 @@ var SMESGMap = function (elementId, options) {
     var melbourneCenter = new google.maps.LatLng(-37.813942, 144.9711861);
 
     this.setupMapStyles();
-    this.mapOptions = options.mapOptions || {
+
+    options = options || {};
+
+    options.mapOptions = options.mapOptions || {
         center: melbourneCenter,
         zoom: 15,
         mapTypeId: google.maps.MapTypeId.ROADMAP,
@@ -35,10 +38,7 @@ var SMESGMap = function (elementId, options) {
         styles: this.mapStyles.iovation
     };
 
-    this.map = new google.maps.Map(document.getElementById(elementId), this.mapOptions);
-    this.geoLocate();
-    this.geocoder = new google.maps.Geocoder;
-    this.markerClusterer = new MarkerClusterer(speedTest.map, speedTest.markers);
+    this.mapOptions = options.mapOptions;
 
     this.markers = [];
     this.labels = [];
@@ -46,27 +46,37 @@ var SMESGMap = function (elementId, options) {
     this.markerIcons = [];
     this.markerSize = 14;
 
-    google.maps.event.addListener(this.map, 'zoom_changed', function () {
-        this.checkSizeofMap();
-        this.setZoomLevel();
+    this.map = new google.maps.Map(document.getElementById(elementId), this.mapOptions);
+    this.geocoder = new google.maps.Geocoder();
+    this.infoWindow = new google.maps.InfoWindow();
+
+    var self = this;
+
+    google.maps.event.addListener(self.map, 'zoom_changed', function () {
+        self.checkSizeofMap();
+        self.setZoomLevel();
     });
 
 
-    if (options.idle) {
-        google.maps.event.addListener(this.map, 'idle', function (e) {
+    if (typeof options.idle === "function") {
+        google.maps.event.addListener(self.map, 'idle', function (e) {
             if (e === undefined) {
-                e = this;
+                e = self;
             }
 
-            options.idle.apply(this, [e]);
+            options.idle.apply(self, [e]);
 
         });
 
     }
 
 
-    google.maps.event.addListener(this.map, 'idle', this.refreshIcons);
+    google.maps.event.addListener(self.map, 'idle', function () {
+        self.resizeIcons();
+    });
 
+    //Attempt oto move map to current user coordinates
+    self.geoLocate();
 
 
 };
@@ -74,11 +84,12 @@ var SMESGMap = function (elementId, options) {
 SMESGMap.prototype.geoLocate = function () {
     "use strict";
 
+    var self = this;
+
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function (position) {
                 var geoPosition = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-                this.map.setCenter(geoPosition);
-
+                self.map.setCenter(geoPosition);
             },
             function (error) {
                 console.log(error);
@@ -102,34 +113,23 @@ SMESGMap.prototype.getZoom = function () {
  * @return {None}.
  */
 
-var mapLabel = new MapLabel({
-    text: 'SMES Test ' + mapCounter,
-    position: new google.maps.LatLng(-37.813942 + (mapCounter * 0.005), 144.9711861 + (mapCounter * 0.005)),
-    map: map,
-    minZoom: 17,
-    fontSize: 12,
-    align: 'center'
-});
-
-
-
 SMESGMap.prototype.addMarker = function (markerTitle, markerLat, markerLng, markerIcon, infoWindowContent) {
     "use strict";
 
     //Capture local reference of map for use in click functions
-    var mapRef = this.map;
+    var self = this;
 
     var icon = {
         url: markerIcon + ".svg",
-        size: new google.maps.Size(this.markerSize, this.markerSize),
-        scaledSize: new google.maps.Size(this.markerSize, this.markerSize)
+        size: new google.maps.Size(self.markerSize, self.markerSize),
+        scaledSize: new google.maps.Size(self.markerSize, self.markerSize)
     };
 
 
     var marker = new google.maps.Marker({
         position: new google.maps.LatLng(markerLat, markerLng),
         title: markerTitle,
-        map: this.map,
+        map: self.map,
         draggable: false,
         icon: icon,
         infoContent: infoWindowContent
@@ -137,64 +137,97 @@ SMESGMap.prototype.addMarker = function (markerTitle, markerLat, markerLng, mark
 
 
     marker.addListener('click', function () {
-        infoWindow.setContent(this.infoContent);
-        infoWindow.open(mapRef, this);
+        self.infoWindow.setContent(self.infoContent);
+        self.infoWindow.open(self.map, self);
     });
 
-    markers.push(marker);
+    self.markers.push(marker);
 
 };
 
 SMESGMap.prototype.addLabel = function (labelContent, labelLat, labelLng) {
+    "use strict";
 
+    var self = this;
 
     var mapLabel = new MapLabel({
         text: labelContent,
         position: new google.maps.LatLng(labelLat, labelLng),
-        map: this.map,
+        map: self.map,
         minZoom: 17,
-        fontSize: 12,
+        fontFamily: "'Muli', sans-serif",
+        strokeWeight: 6,
+        fontColor: 'rgba(0, 0, 0, 0.87)',
+        strokeColor: 'rgba(255, 255, 255, 0.87)',
+        fontSize: 13,
         align: 'center'
     });
 
-    this.labels.push(mapLabel);
-
+    self.labels.push(mapLabel);
 
 
 };
 
 
-SMESGMap.prototype.setZoomLevel = function (newSize) {
+SMESGMap.prototype.setZoomLevel = function () {
     "use strict";
+
+    var self = this;
     var zoomLevel = this.map.getZoom();
 
     //If zoom level has changed, depending on old and new zoom levels marks need to be shown or hidden
-    if (!this.zoomLevel || this.zoomLevel !== zoomLevel) {
+    if (!self.zoomLevel || self.zoomLevel !== zoomLevel) {
 
-        if (zoomLevel < 14 && this.zoomLevel >= 14) {
-            this.hideMarkers();
-        } else if (zoomLevel >= 14 && this.zoomLevel < 14) {
-            this.showMarkers();
+        if (zoomLevel < 14 && self.zoomLevel >= 14) {
+            self.hideMarkers();
+        } else if (zoomLevel >= 14 && self.zoomLevel < 14) {
+            self.showMarkers();
 
         }
 
         if (zoomLevel >= 14) {
-            this.updateMarkerIconSize(markerSize);
+            self.markerResizeRequired = true;
         }
 
     }
 
     //Reset zoomLevel
-    this.zoomLevel = this.map.getZoom();
-    this.markerSize = this.zoomLevel;
+    self.zoomLevel = self.map.getZoom();
+    self.markerSize = self.zoomLevel + 1;
 
 };
+
+SMESGMap.prototype.resizeIcons = function () {
+    "use strict";
+
+    var icon, newSize;
+    var self = this;
+
+    //Loop through the markers and re-szie their icons
+    for (var markerCounter = 0; markerCounter < self.markers.length || 0; markerCounter++) {
+        //Retrieve the marker icon and re-set its size
+        icon = self.markers[markerCounter];
+        newSize = self.markerSize || 14;
+
+        icon.scaledSize = new google.maps.Size(newSize, newSize);
+        icon.size = new google.maps.Size(newSize, newSize);
+
+        //Update icon
+        self.markers[markerCounter].setIcon(icon);
+    }
+
+};
+
+
+
 
 SMESGMap.prototype.hideMarkers = function () {
     "use strict";
 
-    for (var i = 0; i < this.markers.length; i++) {
-        this.markers[i].setMap(null);
+    var self = this;
+
+    for (var i = 0; i < self.markers.length; i++) {
+        self.markers[i].setMap(null);
     }
 
 };
@@ -202,8 +235,10 @@ SMESGMap.prototype.hideMarkers = function () {
 SMESGMap.prototype.showMarkers = function () {
     "use strict";
 
-    for (var i = 0; i < this.markers.length; i++) {
-        this.markers[i].setMap(this.map);
+    var self = this;
+
+    for (var i = 0; i < self.markers.length; i++) {
+        self.markers[i].setMap(self.map);
     }
 
 };
@@ -212,8 +247,10 @@ SMESGMap.prototype.showMarkers = function () {
 SMESGMap.prototype.hideLabels = function () {
     "use strict";
 
-    for (var i = 0; i < this.labels.length; i++) {
-        this.labels[i].set('map', 'null');
+    var self = this;
+
+    for (var i = 0; i < self.labels.length; i++) {
+        self.labels[i].set('map', 'null');
     }
 
 
@@ -222,8 +259,10 @@ SMESGMap.prototype.hideLabels = function () {
 SMESGMap.prototype.showLabels = function () {
     "use strict";
 
-    for (var i = 0; i < this.labels.length; i++) {
-        this.labels[i].set('map', this.map);
+    var self = this;
+
+    for (var i = 0; i < self.labels.length; i++) {
+        self.labels[i].set('map', self.map);
     }
 
 };
@@ -232,6 +271,7 @@ SMESGMap.prototype.showLabels = function () {
 
 SMESGMap.prototype.reverseGeocode = function (cLat, cLng) {
     "use strict";
+
 
     return new Promise(function (resolve, reject) {
 
@@ -259,23 +299,25 @@ SMESGMap.prototype.reverseGeocode = function (cLat, cLng) {
 };
 
 SMESGMap.prototype.setUpAutoComplete = function (elementId) {
+    "use strict";
 
-    input = document.getElementById(elementId);
+    var self = this;
+    var input = document.getElementById(elementId);
+    var searchInfoWindow = new google.maps.InfoWindow();
 
-    searchMarker = new google.maps.Marker({
-        map: map.map,
+    var searchMarker = new google.maps.Marker({
+        map: self.map,
         anchorPoint: new google.maps.Point(0, -29)
     });
 
-    this.autoComplete = new google.maps.places.Autocomplete(input);
-    this.autoComplete.bindTo('bounds', this.map);
+    self.autoComplete = new google.maps.places.Autocomplete(input);
+    self.autoComplete.bindTo('bounds', self.map);
 
-    infoWindow = new google.maps.InfoWindow();
 
-    autoComplete.addListener('place_changed', function () {
-        infoWindow.close();
+    self.autoComplete.addListener('place_changed', function () {
+        searchInfoWindow.close();
         searchMarker.setVisible(false);
-        var place = autoComplete.getPlace();
+        var place = self.autoComplete.getPlace();
 
         if (!place.geometry) {
             return;
@@ -283,13 +325,12 @@ SMESGMap.prototype.setUpAutoComplete = function (elementId) {
 
         // If the place has a geometry, then present it on a map.
         if (place.geometry.viewport) {
-            map.map.fitBounds(place.geometry.viewport);
+            self.map.fitBounds(place.geometry.viewport);
         } else {
-            map.map.setCenter(place.geometry.location);
-            map.setZoom(17); // Why 17? Because it will likely be close enough to load marks.
+            self.map.setCenter(place.geometry.location);
+            self.setZoom(17); // Why 17? Because it will likely be close enough to load marks.
         }
-        //Check for marks at new location
-        queueRedraw();
+
         //Add map icon
         searchMarker.setIcon( /** @type {google.maps.Icon} */ ({
             url: place.icon,
@@ -310,13 +351,13 @@ SMESGMap.prototype.setUpAutoComplete = function (elementId) {
             ].join(' ');
         }
 
-        infoWindow.setContent('<div><strong>' + place.name + '</strong><br>' + address + '</div>');
-        infoWindow.open(map.map, searchMarker);
+        searchInfoWindow.setContent('<div><strong>' + place.name + '</strong><br>' + address + '</div>');
+        searchInfoWindow.open(self.map, searchMarker);
 
     });
 
     searchMarker.addListener('click', function () {
-        infoWindow.open(map.map, searchMarker);
+        searchInfoWindow.open(self.map, searchMarker);
     });
 
 };
@@ -324,17 +365,18 @@ SMESGMap.prototype.setUpAutoComplete = function (elementId) {
 
 
 SMESGMap.prototype.checkSizeofMap = function () {
-
+    "use strict";
 
     var mapBoundsSouthWest = this.map.getBounds().getSouthWest();
     var mapCenter = this.map.getCenter();
+    var self = this;
 
     if (typeof mapBounds !== 'undefined') {
-        var mapRadius = this.getDistanceKms(mapCenter.lat(), mapCenter.lng(), mapBoundsSouthWest.lat(), mapBoundsSouthWest.lng());
+        var mapRadius = self.getDistanceKms(mapCenter.lat(), mapCenter.lng(), mapBoundsSouthWest.lat(), mapBoundsSouthWest.lng());
 
-        this.mapSize = (mapRadius / 1000);
+        self.mapSize = (mapRadius / 1000);
     } else {
-        this.mapSize = 0;
+        self.mapSize = 0;
     }
 
 
@@ -345,11 +387,14 @@ SMESGMap.prototype.checkSizeofMap = function () {
  * @params {number} - coordinate values in latitude and longitude for the two points
  */
 SMESGMap.prototype.getDistanceKms = function (point1Lat, point1Lng, point2Lat, point2Lng) {
+    "use strict";
+
+    var self = this;
     var R = 6378137; // Earth’s mean radius
-    var dLat = this.calcRad(point2Lat - point1Lat);
-    var dLong = this.calcRad(point2Lng - point1Lng);
+    var dLat = self.calcRad(point2Lat - point1Lat);
+    var dLong = self.calcRad(point2Lng - point1Lng);
     var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(this.calcRad(point1Lat)) * Math.cos(this.calcRad(point2Lat)) *
+        Math.cos(self.calcRad(point1Lat)) * Math.cos(self.calcRad(point2Lat)) *
         Math.sin(dLong / 2) * Math.sin(dLong / 2);
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     var d = R * c;
@@ -362,6 +407,8 @@ SMESGMap.prototype.getDistanceKms = function (point1Lat, point1Lng, point2Lat, p
  * @params {number} x - the input value
  */
 SMESGMap.prototype.calcRad = function (x) {
+    "use strict";
+
     return x * Math.PI / 180;
 };
 
@@ -369,6 +416,8 @@ SMESGMap.prototype.calcRad = function (x) {
   Map stlyes for use with Google maps
 **/
 SMESGMap.prototype.setupMapStyles = function () {
+    "use strict";
+
     this.mapStyles = {
         coolGrey: [{
             "featureType": "landscape",
