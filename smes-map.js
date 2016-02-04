@@ -191,7 +191,7 @@ SMESGMap.prototype.setZoomLevel = function () {
     //If zoom level has changed, depending on old and new zoom levels marks need to be shown or hidden
     if (!self.zoomLevel || self.zoomLevel !== zoomLevel) {
 
-        if (zoomLevel < 14 && self.zoomLevel >= 14) {
+        if (zoomLevel < 14 && (!self.zoomLevel || self.zoomLevel >= 14)) {
             self.hideMarkers();
         } else if (zoomLevel >= 14 && self.zoomLevel < 14) {
             self.showMarkers();
@@ -384,7 +384,7 @@ SMESGMap.prototype.checkSizeofMap = function () {
     var mapCenter = this.map.getCenter();
     var self = this;
 
-    if (typeof mapBounds !== 'undefined') {
+    if (typeof mapBoundsSouthWest !== 'undefined' && typeof mapCenter !== 'undefined' ) {
         var mapRadius = self.getDistanceKms(mapCenter.lat(), mapCenter.lng(), mapBoundsSouthWest.lat(), mapBoundsSouthWest.lng());
 
         self.mapSize = (mapRadius / 1000);

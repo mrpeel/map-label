@@ -10,6 +10,8 @@ var SMESMarkStore = function () {
     this.perNumberOfSeconds = 60;
     this.lastStorageTimeStamp = Date.now();
     this.baseURL = 'https://maps.land.vic.gov.au/lvis/services/smesDataDelivery';
+    this.updateIndex = [];
+    this.newIndex = [];
 
     if (this.useLocalStore) {
         this.retrieveStoredMarks();
@@ -17,8 +19,6 @@ var SMESMarkStore = function () {
         this.markData = {};
     }
 
-    this.updateIndex = [];
-    this.newIndex = [];
 
 };
 
@@ -40,7 +40,7 @@ SMESMarkStore.prototype.localStorageAvailable = function () {
 SMESMarkStore.prototype.retrieveStoredMarks = function () {
     "use strict";
 
-    var storedData;
+    var storedData, mark;
 
     if (!this.useLocalStore) {
         return;
@@ -52,6 +52,10 @@ SMESMarkStore.prototype.retrieveStoredMarks = function () {
         this.markData = JSON.parse(storedData);
         //Remove data older than 14 days
         this.markData = this.removeOldMarks(14);
+        //Add all marks to the new mark index - to ensure they will get loaded to the UI
+        for (mark in this.markData) {
+            this.newIndex.push(mark);
+        }
 
     } else {
         this.markData = {};
@@ -82,6 +86,7 @@ SMESMarkStore.prototype.saveMarksToStorage = function () {
         if (storageTimeStamp === self.lastStorageTimeStamp) {
             try {
                 window.localStorage.setItem('smes-mark-data', JSON.stringify(self.markData));
+                console.log("Data written to local storage");
             } catch (e) {
                 try {
                     //Check total size - if >= 5MB then start culling - attempt to only store marks retrieved within the last 7 days
@@ -113,7 +118,7 @@ SMESMarkStore.prototype.removeOldMarks = function (numberOfDays) {
     var newMarkData = this.markData;
 
     for (individualMark in newMarkData) {
-        if (this.isNumberOfDaysOld(individualMark.lastUpdate, numberOfDays)) {
+        if (this.isNumberOfDaysOld(newMarkData[individualMark].lastUpdated, numberOfDays)) {
             delete newMarkData[individualMark];
         }
     }
@@ -144,11 +149,11 @@ SMESMarkStore.prototype.isNumberOfDaysOld = function (dateValue, number) {
 
 };
 
-SMESMarkStore.prototype.queueRetrieveMarkInformation = function (cLat, cLong, cRadius, callback) {
+SMESMarkStore.prototype.requestMarkInformation = function (cLat, cLong, cRadius, callback) {
     "use strict";
 
     var self = this;
-    var currentRequestTimeStamp = Date().now;
+    var currentRequestTimeStamp = new Date();
     //Set minimum time daly before executing web service request - this functions as a de-bounce operation
     var executionDelay = 500;
 
@@ -172,12 +177,14 @@ SMESMarkStore.prototype.queueRetrieveMarkInformation = function (cLat, cLong, cR
     window.setTimeout(function () {
         //Check if this is still the most recently queued request
         if (currentRequestTimeStamp === self.lastQueuedTimeStamp) {
-            self.lastSuccesfullRetrieve = Date.now();
-            self.retrieveMarkInformation.then(function (marksRetrieved) {
+            console.log("Processing request");
+            self.lastSuccesfullRetrieve = new Date();
+            self.retrieveMarkInformation(cLat, cLong, cRadius).then(function (marksRetrieved) {
                 //Check data element is present, if so process it, and run the callback function
-                if (marksRetrieved.data) {
-                    self.processRetrievedMarks(marksRetrieved.data).then(function () {
-                        callback.apply();
+                if (marksRetrieved) {
+                    self.processRetrievedMarks(marksRetrieved).then(function () {
+                        console.log("Executing callback");
+                        callback.apply(this);
                     });
 
                 }
@@ -185,6 +192,8 @@ SMESMarkStore.prototype.queueRetrieveMarkInformation = function (cLat, cLong, cR
                 console.log(err);
             });
 
+        } else {
+            console.log("Dropping request - newer request has arrived");
         }
     }, executionDelay);
 
@@ -203,6 +212,8 @@ SMESMarkStore.prototype.processRetrievedMarks = function (retrievedData) {
         //reset indexes of new and updates marks
         self.updateIndex = [];
         self.newIndex = [];
+
+        console.log("Mark count: " + self.countMarks());
 
         for (var i = 0; i < retrievedData.length; i++) {
             dataObject = retrievedData[i];
@@ -224,6 +235,9 @@ SMESMarkStore.prototype.processRetrievedMarks = function (retrievedData) {
                         //data has changed so store data, store hash, remove address, and update lastUpdated
                         self.addUpdateValueInStore(dataObject, dataHash);
                         self.updateIndex.push(dataObject.nineFigureNumber);
+                    } else {
+                        //Latest data is the same so change the lastUpdated value to now
+                        self.markData[dataObject.nineFigureNumber].lastUpdated = Date.now();
                     }
                 }
 
@@ -233,12 +247,30 @@ SMESMarkStore.prototype.processRetrievedMarks = function (retrievedData) {
 
         resolve(true);
 
+        console.log("Mark count: " + self.countMarks());
+
         //Trigger process to save marks into browser storage
         self.saveMarksToStorage();
 
     });
 
 
+};
+
+SMESMarkStore.prototype.countMarks = function () {
+    "use strict";
+
+    var self = this;
+    var objectProp;
+    var markCounter = 0;
+
+
+    //Simple concatenation of the properties of the object - up to 24 vals
+    for (objectProp in self.markData) {
+        markCounter += 1;
+    }
+
+    return markCounter;
 };
 
 SMESMarkStore.prototype.calculateDataHash = function (dataObject) {
@@ -285,9 +317,10 @@ SMESMarkStore.prototype.setAddress = function (nineFigureNumber, address) {
 SMESMarkStore.prototype.retrieveMarkInformation = function (cLat, cLong, cRadius) {
     "use strict";
 
+    var self = this;
 
     return new Promise(function (resolve, reject) {
-        xr.get(this.baseURL + '/getMarkInformation', {
+        xr.get(self.baseURL + '/getMarkInformation', {
                 searchType: "Location",
                 latitude: cLat,
                 longitude: cLong,

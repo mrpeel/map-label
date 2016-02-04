@@ -1,6 +1,7 @@
-/* global SMESGMap, dataResponse, document, console */
+/* global SMESGMap, dataResponse, document, console, SMESMarkStore */
 
 var smesMap;
+var testMarkStore;
 var scnAHDValues = ["ZEROTH ORDER", "2ND ORDER", "3RD ORDER", "SPIRIT LEVELLING"];
 var scnGDA94Value = "ADJUSTMENT";
 var pcmSearchText = "PCM";
@@ -8,47 +9,44 @@ var currentNineFigureNumber;
 var currentLatLng = {};
 var currentRadius;
 
+
+
 function setupMap() {
 
-    var icon;
-    smesMap = new SMESGMap("map");
+    var mapOptions = {};
+    mapOptions.idle = requestMarkInformation;
+
+    smesMap = new SMESGMap("map", mapOptions);
+    testMarkStore = new SMESMarkStore();
     smesMap.setUpAutoComplete("autoComplete");
 
     loadMarks();
 
 }
 
-function markClickHandler(nineFigureNumber, lat, lng) {
-    return function () {
-        currentNineFigureNumber = nineFigureNumber;
-        currentLatLng.lat = lat;
-        currentLatLng.lng = lng;
-        console.log(nineFigureNumber);
-    };
+function requestMarkInformation() {
 
-}
+    var mapCenter, radius;
 
-function domReadyHandler(nineFigureNumber) {
-    return function () {
-        document.querySelector("[id=sketch" + nineFigureNumber + "]").addEventListener("click", function () {
-            console.log('Sketch: ' + nineFigureNumber);
-        }, false);
-        document.querySelector("[id=report" + nineFigureNumber + "]").addEventListener("click", function () {
-            console.log('Report: ' + nineFigureNumber);
-        }, false);
-    };
+    mapCenter = smesMap.map.getCenter();
+    radius = smesMap.mapSize || 2;
+
+    testMarkStore.requestMarkInformation(mapCenter.lat(), mapCenter.lng(), radius, loadMarks);
+    console.log(testMarkStore.newIndex);
 
 }
 
 function loadMarks() {
+    //Work through the new markers abnd add to the map
+    var surveyMark, address, iconName;
+    var eventListeners = {};
 
-    var surveyMark, iconName;
+    for (var i = 0; i < testMarkStore.newIndex.length; i++) {
 
-    for (var i = 0; i < dataResponse.data.length; i++) {
-
-        surveyMark = dataResponse.data[i];
+        surveyMark = testMarkStore.markData[testMarkStore.newIndex[i]].data;
+        address = testMarkStore.markData[testMarkStore.newIndex[i]].address || '';
         iconName = returnMarkerIconType(surveyMark);
-        var eventListeners = {};
+
 
         eventListeners.domready = domReadyHandler(surveyMark.nineFigureNumber);
         eventListeners.click = markClickHandler(surveyMark.nineFigureNumber, surveyMark.latitude, surveyMark.longitude);
@@ -80,6 +78,32 @@ function loadMarks() {
 
 
     }
+
+
+    //Call the zoom level to show / hide marks and labels as required
+    smesMap.setZoomLevel();
+}
+
+function markClickHandler(nineFigureNumber, lat, lng) {
+    return function () {
+        currentNineFigureNumber = nineFigureNumber;
+        currentLatLng.lat = lat;
+        currentLatLng.lng = lng;
+        console.log(nineFigureNumber);
+    };
+
+}
+
+function domReadyHandler(nineFigureNumber) {
+    return function () {
+        document.querySelector("[id=sketch" + nineFigureNumber + "]").addEventListener("click", function () {
+            console.log('Sketch: ' + nineFigureNumber);
+        }, false);
+        document.querySelector("[id=report" + nineFigureNumber + "]").addEventListener("click", function () {
+            console.log('Report: ' + nineFigureNumber);
+        }, false);
+    };
+
 }
 
 function returnMarkerIconType(surveyMark) {
