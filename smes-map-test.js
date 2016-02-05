@@ -1,4 +1,4 @@
-/* global SMESGMap, dataResponse, document, console, SMESMarkStore */
+/* global SMESGMap, dataResponse, document, console, SMESMarkStore, saveAs, window */
 
 var smesMap;
 var testMarkStore;
@@ -15,6 +15,7 @@ function setupMap() {
 
     var mapOptions = {};
     mapOptions.idle = requestMarkInformation;
+    mapOptions.zoomChanged = displayZoomMessage;
 
     smesMap = new SMESGMap("map", mapOptions);
     testMarkStore = new SMESMarkStore();
@@ -31,17 +32,39 @@ function requestMarkInformation() {
     mapCenter = smesMap.map.getCenter();
     radius = smesMap.mapSize || 2;
 
-    testMarkStore.requestMarkInformation(mapCenter.lat(), mapCenter.lng(), radius, loadMarks);
+    console.log("requestMarkInformation");
+
+    testMarkStore.requestMarkInformation(mapCenter.lat(), mapCenter.lng(), radius, loadMarks, showZoomMessage);
     console.log(testMarkStore.newIndex);
 
+}
+
+function showZoomMessage() {
+    var msgEl = document.querySelector("[id=zoom-msg]");
+
+    msgEl.classList.remove("hidden");
+}
+
+function displayZoomMessage() {
+    var msgEl = document.querySelector("[id=zoom-msg]");
+
+    if (smesMap.mapSize > 2) {
+        msgEl.classList.remove("hidden");
+    } else {
+        msgEl.classList.add("hidden");
+    }
 }
 
 function loadMarks() {
     //Work through the new markers abnd add to the map
     var surveyMark, address, iconName;
-    var eventListeners = {};
+
+    console.log("loadMarks");
+
 
     for (var i = 0; i < testMarkStore.newIndex.length; i++) {
+
+        var eventListeners = {};
 
         surveyMark = testMarkStore.markData[testMarkStore.newIndex[i]].data;
         address = testMarkStore.markData[testMarkStore.newIndex[i]].address || '';
@@ -81,7 +104,10 @@ function loadMarks() {
 
 
     //Call the zoom level to show / hide marks and labels as required
-    smesMap.setZoomLevel();
+    window.setTimeout(function () {
+        console.log("Set zoom");
+        smesMap.setZoomLevel();
+    }, 0);
 }
 
 function markClickHandler(nineFigureNumber, lat, lng) {
@@ -98,9 +124,27 @@ function domReadyHandler(nineFigureNumber) {
     return function () {
         document.querySelector("[id=sketch" + nineFigureNumber + "]").addEventListener("click", function () {
             console.log('Sketch: ' + nineFigureNumber);
+
+            testMarkStore.getSurveyMarkSketchResponse(nineFigureNumber).then(function (pdfData) {
+                var blob = testMarkStore.base64toBlob(pdfData.document, 'application/pdf');
+
+                saveAs(blob, nineFigureNumber + '-sketch.pdf');
+            }).catch(function (error) {
+                console.log("PDF retrieval failed");
+            });
+
         }, false);
         document.querySelector("[id=report" + nineFigureNumber + "]").addEventListener("click", function () {
             console.log('Report: ' + nineFigureNumber);
+
+            testMarkStore.getSurveyMarkReportResponse(nineFigureNumber).then(function (pdfData) {
+                var blob = testMarkStore.base64toBlob(pdfData.document, 'application/pdf');
+
+                saveAs(blob, nineFigureNumber + '-report.pdf');
+            }).catch(function (error) {
+                console.log("PDF retrieval failed");
+            });
+
         }, false);
     };
 

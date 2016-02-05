@@ -6,7 +6,7 @@ var SMESMarkStore = function () {
     "use strict";
 
     this.useLocalStore = this.localStorageAvailable();
-    this.maxRequests = 30;
+    this.maxRequests = 15;
     this.perNumberOfSeconds = 60;
     this.lastStorageTimeStamp = Date.now();
     this.baseURL = 'https://maps.land.vic.gov.au/lvis/services/smesDataDelivery';
@@ -66,6 +66,18 @@ SMESMarkStore.prototype.retrieveStoredMarks = function () {
 
 };
 
+SMESMarkStore.prototype.clearStoredMarks = function () {
+    "use strict";
+
+
+    if (!this.useLocalStore) {
+        return;
+    }
+
+    window.localStorage.removeItem('smes-mark-data');
+
+};
+
 SMESMarkStore.prototype.saveMarksToStorage = function () {
     "use strict";
 
@@ -80,8 +92,8 @@ SMESMarkStore.prototype.saveMarksToStorage = function () {
     self.lastStorageTimeStamp = Date.now();
     storageTimeStamp = self.lastStorageTimeStamp;
 
-    //Set function to write storage after 30 seconds.
-    // if another write request comes in within 30 seconds, this.lastStorageTimeStamp variable will have changed and the write will be aborted.
+    //Set function to write storage after 20 seconds.
+    // if another write request comes in within 20 seconds, this.lastStorageTimeStamp variable will have changed and the write will be aborted.
     window.setTimeout(function () {
         if (storageTimeStamp === self.lastStorageTimeStamp) {
             try {
@@ -106,7 +118,7 @@ SMESMarkStore.prototype.saveMarksToStorage = function () {
                 }
             }
         }
-    }, 30000);
+    }, 20000);
 
 };
 
@@ -149,13 +161,28 @@ SMESMarkStore.prototype.isNumberOfDaysOld = function (dateValue, number) {
 
 };
 
-SMESMarkStore.prototype.requestMarkInformation = function (cLat, cLong, cRadius, callback) {
+SMESMarkStore.prototype.delayNextRequest = function () {
+    "use strict";
+
+    var self = this;
+
+    //Set the last succesfull request in the future to prevent requests happening (clean-up if a 429 error has been triggered and need to back off)
+    self.lastSuccesfullRetrieve = Date.now() + 20000;
+
+};
+
+SMESMarkStore.prototype.requestMarkInformation = function (cLat, cLong, cRadius, callback, tooManyCallback) {
     "use strict";
 
     var self = this;
     var currentRequestTimeStamp = new Date();
     //Set minimum time daly before executing web service request - this functions as a de-bounce operation
     var executionDelay = 500;
+
+    //If an unacceptable radius has been supplied, don't call the service
+    if (cRadius > 2) {
+        return;
+    }
 
     //Record the last request queued time
     self.lastQueuedTimeStamp = currentRequestTimeStamp;
@@ -189,6 +216,9 @@ SMESMarkStore.prototype.requestMarkInformation = function (cLat, cLong, cRadius,
 
                 }
             }).catch(function (err) {
+                if (err === "Too many marks") {
+                    tooManyCallback.apply(this);
+                }
                 console.log(err);
             });
 
@@ -213,7 +243,7 @@ SMESMarkStore.prototype.processRetrievedMarks = function (retrievedData) {
         self.updateIndex = [];
         self.newIndex = [];
 
-        console.log("Mark count: " + self.countMarks());
+        //console.log("Mark count: " + self.countMarks());
 
         for (var i = 0; i < retrievedData.length; i++) {
             dataObject = retrievedData[i];
@@ -247,7 +277,7 @@ SMESMarkStore.prototype.processRetrievedMarks = function (retrievedData) {
 
         resolve(true);
 
-        console.log("Mark count: " + self.countMarks());
+        //console.log("Mark count: " + self.countMarks());
 
         //Trigger process to save marks into browser storage
         self.saveMarksToStorage();
@@ -355,6 +385,10 @@ SMESMarkStore.prototype.retrieveMarkInformation = function (cLat, cLong, cRadius
             })
             .catch(function (err) {
                 console.log(err);
+                if (xr.status === 0 && xr.response === "") {
+                    self.delayNextRequest();
+                    console.log("Too many requests");
+                }
                 return Promise.reject(err);
             });
     });
@@ -370,8 +404,10 @@ SMESMarkStore.prototype.retrieveMarkInformation = function (cLat, cLong, cRadius
 SMESMarkStore.prototype.getSurveyMarkSketchResponse = function (nineFigureNumber) {
     "use strict";
 
+    var self = this;
+
     return new Promise(function (resolve, reject) {
-        xr.get(this.baseURL + '/getSurveyMarkSketches', {
+        xr.get(self.baseURL + '/getSurveyMarkSketches', {
                 markList: nineFigureNumber,
                 returnDefective: true
             })
@@ -404,8 +440,10 @@ SMESMarkStore.prototype.getSurveyMarkSketchResponse = function (nineFigureNumber
 SMESMarkStore.prototype.getSurveyMarkReportResponse = function (nineFigureNumber) {
     "use strict";
 
+    var self = this;
+
     return new Promise(function (resolve, reject) {
-        xr.get(this.baseURL + '/getSurveyMarkReports', {
+        xr.get(self.baseURL + '/getSurveyMarkReports', {
                 markList: nineFigureNumber,
                 returnDefective: true
             })
@@ -428,4 +466,27 @@ SMESMarkStore.prototype.getSurveyMarkReportResponse = function (nineFigureNumber
                 return Promise.reject(err);
             });
     });
+};
+
+SMESMarkStore.prototype.base64toBlob = function (b64Data, contentType, sliceSize) {
+    "use strict";
+
+    contentType = contentType || '';
+    sliceSize = sliceSize || 512;
+
+    var byteCharacters = atob(b64Data);
+    var byteArrays = [];
+    for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+        var slice = byteCharacters.slice(offset, offset + sliceSize);
+        var byteNumbers = new Array(slice.length);
+        for (var i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+        }
+        var byteArray = new Uint8Array(byteNumbers);
+        byteArrays.push(byteArray);
+    }
+    var blob = new Blob(byteArrays, {
+        type: contentType
+    });
+    return blob;
 };

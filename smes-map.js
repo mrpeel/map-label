@@ -44,7 +44,8 @@ var SMESGMap = function (elementId, options) {
     this.labels = [];
     this.currentZoom = 1;
     this.markerIcons = [];
-    this.markerSize = 14;
+    this.markerSize = 10;
+    this.markersHidden = false;
 
     this.map = new google.maps.Map(document.getElementById(elementId), this.mapOptions);
     this.geocoder = new google.maps.Geocoder();
@@ -55,6 +56,24 @@ var SMESGMap = function (elementId, options) {
     google.maps.event.addListener(self.map, 'zoom_changed', function () {
         self.checkSizeofMap();
         self.setZoomLevel();
+    });
+
+
+    if (typeof options.zoomChanged === "function") {
+        google.maps.event.addListener(self.map, 'zoom_changed', function (e) {
+            if (e === undefined) {
+                e = self;
+            }
+
+            options.zoomChanged.apply(self, [e]);
+
+        });
+
+    }
+
+
+    google.maps.event.addListener(self.map, 'idle', function () {
+        self.resizeIcons();
     });
 
 
@@ -70,10 +89,6 @@ var SMESGMap = function (elementId, options) {
 
     }
 
-
-    google.maps.event.addListener(self.map, 'idle', function () {
-        self.resizeIcons();
-    });
 
     //Attempt oto move map to current user coordinates
     self.geoLocate();
@@ -155,6 +170,11 @@ SMESGMap.prototype.addMarker = function (markerTitle, markerLat, markerLng, mark
 
     self.markers.push(marker);
 
+    //Check whether marker should be visible or not
+    if (self.markersHidden) {
+        marker.setMap(null);
+    }
+
 
 };
 
@@ -171,7 +191,7 @@ SMESGMap.prototype.addLabel = function (labelContent, labelLat, labelLng) {
         fontFamily: "'Muli', sans-serif",
         strokeWeight: 6,
         fontColor: 'rgba(28, 43, 139, 0.87)',
-        strokeColor: 'rgba(225, 225, 225, 0.87)',
+        strokeColor: 'rgba(245, 245, 245, 0.87)',
         fontSize: 12,
         align: 'center'
     });
@@ -193,20 +213,21 @@ SMESGMap.prototype.setZoomLevel = function () {
 
         if (zoomLevel < 14 && (!self.zoomLevel || self.zoomLevel >= 14)) {
             self.hideMarkers();
-        } else if (zoomLevel >= 14 && self.zoomLevel < 14) {
+            self.markersHidden = true;
+        } else if (zoomLevel >= 14 && (!self.zoomLevel || self.zoomLevel < 14)) {
             self.showMarkers();
-
         }
 
         if (zoomLevel >= 14) {
             self.markerResizeRequired = true;
+            self.markersHidden = false;
         }
 
     }
 
     //Reset zoomLevel
     self.zoomLevel = self.map.getZoom();
-    self.markerSize = self.zoomLevel;
+    self.markerSize = 9 + ((self.zoomLevel - 14) * 1.75);
 
 };
 
@@ -345,13 +366,14 @@ SMESGMap.prototype.setUpAutoComplete = function (elementId) {
         }
 
         //Add map icon
-        searchMarker.setIcon( /** @type {google.maps.Icon} */ ({
-            //url: place.icon,
+        //searchMarker.setIcon( /** @type {google.maps.Icon} */ 
+        /*({
+            url: place.icon,
             size: new google.maps.Size(71, 71),
             origin: new google.maps.Point(0, 0),
             anchor: new google.maps.Point(17, 34),
             scaledSize: new google.maps.Size(35, 35)
-        }));
+        }));*/
         searchMarker.setPosition(place.geometry.location);
         searchMarker.setVisible(true);
 
@@ -384,7 +406,7 @@ SMESGMap.prototype.checkSizeofMap = function () {
     var mapCenter = this.map.getCenter();
     var self = this;
 
-    if (typeof mapBoundsSouthWest !== 'undefined' && typeof mapCenter !== 'undefined' ) {
+    if (typeof mapBoundsSouthWest !== 'undefined' && typeof mapCenter !== 'undefined') {
         var mapRadius = self.getDistanceKms(mapCenter.lat(), mapCenter.lng(), mapBoundsSouthWest.lat(), mapBoundsSouthWest.lng());
 
         self.mapSize = (mapRadius / 1000);
