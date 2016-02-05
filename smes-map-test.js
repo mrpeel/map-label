@@ -81,20 +81,20 @@ function displayZoomMessage() {
 }
 
 function loadMarks() {
-    //Work through the new markers abnd add to the map
+    //Work through the new markers and add to the map, then work through updated markers and update on the map
     var surveyMark, address, iconName;
 
     console.log("loadMarks");
 
-
-    for (var i = 0; i < testMarkStore.newIndex.length; i++) {
+    //Add new marks
+    for (var n = 0; n < testMarkStore.newIndex.length; n++) {
 
         var eventListeners = {};
         var marker = {};
         var label = {};
 
-        surveyMark = testMarkStore.markData[testMarkStore.newIndex[i]].data;
-        address = testMarkStore.markData[testMarkStore.newIndex[i]].address || '';
+        surveyMark = testMarkStore.markData[testMarkStore.newIndex[n]].data;
+        address = testMarkStore.markData[testMarkStore.newIndex[n]].address || '';
         iconName = returnMarkerIconType(surveyMark);
 
 
@@ -134,6 +134,48 @@ function loadMarks() {
 
     }
 
+    //Update marks
+    for (var u = 0; u < testMarkStore.updateIndex.length; u++) {
+
+        var uMarker = {};
+        var uLabel = {};
+
+        surveyMark = testMarkStore.markData[testMarkStore.newIndex[u]].data;
+        iconName = returnMarkerIconType(surveyMark);
+
+
+        uMarker.lat = surveyMark.latitude;
+        uMarker.lng = surveyMark.longitude;
+        uMarker.title = surveyMark.name;
+        uMarker.icon = iconName;
+        uMarker.nineFigureNo = surveyMark.nineFigureNumber;
+        uMarker.infoWindowContent = '<p class="mdl-color-text--primary"><b>' + surveyMark.name + '</b></p><hr>' +
+            '<p>Nine Figure Number: ' + surveyMark.nineFigureNumber + '</p>' +
+            '<p>Status: ' + surveyMark.status + '</p>' +
+            '<p>SCN: ' + surveyMark.scn + '</p>' +
+            '<p>Zone: ' + surveyMark.zone + '</p>' +
+            '<p>Easting: ' + surveyMark.easting + '</p>' +
+            '<p>Northing: ' + surveyMark.northing + '</p>' +
+            '<p>AHD Height: ' + surveyMark.ahdHeight + '</p>' +
+            '<p>Ellipsoid Height: ' + surveyMark.ellipsoidHeight + '</p>' +
+            '<p>GDA94 Technique: ' + surveyMark.gda94Technique + '</p>' +
+            '<p>AHD Technique: ' + surveyMark.ahdTechnique + '</p>' +
+            '<hr>' +
+            '<button id="sketch' + surveyMark.nineFigureNumber + '" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color-text--primary smes-button fade-in">&nbsp;&nbsp;View Mark Sketch&nbsp;&nbsp;</button>' +
+            '<button id="report' + surveyMark.nineFigureNumber + '" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color-text--primary smes-button fade-in">&nbsp;&nbsp;View Mark Report&nbsp;&nbsp;</button>';
+
+
+        smesMap.updateMarker(uMarker);
+
+
+        uLabel.lat = surveyMark.latitude;
+        uLabel.lng = surveyMark.longitude;
+        uLabel.label = surveyMark.name;
+        uLabel.nineFigureNo = surveyMark.nineFigureNumber;
+
+        smesMap.updateLabel(uLabel);
+
+    }
 
     //Call the zoom level to show / hide marks and labels as required
     smesMap.setZoomLevel();
