@@ -128,11 +128,21 @@ SMESGMap.prototype.getZoom = function () {
  * @return {None}.
  */
 
-SMESGMap.prototype.addMarker = function (markerTitle, markerLat, markerLng, markerIcon, infoWindowContent, eventListeners) {
+SMESGMap.prototype.addMarker = function (marker) {
     "use strict";
 
     //Capture local reference of map for use in click functions
     var self = this;
+    var markerLat, markerLng, markerTitle, markerIcon, nineFigureNo, infoWindowContent, eventListeners;
+
+    markerLat = marker.lat;
+    markerLng = marker.lng;
+    markerTitle = marker.title;
+    markerIcon = marker.icon;
+    nineFigureNo = marker.nineFigureNo;
+    infoWindowContent = marker.infoWindowContent;
+    eventListeners = marker.eventListeners || null;
+
 
     var icon = {
         url: markerIcon + ".svg",
@@ -141,20 +151,21 @@ SMESGMap.prototype.addMarker = function (markerTitle, markerLat, markerLng, mark
     };
 
 
-    var marker = new google.maps.Marker({
+    var mapMarker = new google.maps.Marker({
         position: new google.maps.LatLng(markerLat, markerLng),
         title: markerTitle,
         map: self.map,
         draggable: false,
         icon: icon,
         animation: google.maps.Animation.DROP,
-        infoContent: infoWindowContent
+        infoContent: infoWindowContent,
+        nineFigureNo: nineFigureNo,
     });
 
 
 
-    marker.addListener('click', function () {
-        self.infoWindow.setContent(infoWindowContent);
+    mapMarker.addListener('click', function () {
+        self.infoWindow.setContent(mapMarker.infoContent); //infoWindowContent);
         self.infoWindow.open(self.map, this);
 
         if (eventListeners && eventListeners.click) {
@@ -168,20 +179,73 @@ SMESGMap.prototype.addMarker = function (markerTitle, markerLat, markerLng, mark
     });
 
 
-    self.markers.push(marker);
+    self.markers.push(mapMarker);
 
     //Check whether marker should be visible or not
     if (self.markersHidden) {
-        marker.setMap(null);
+        mapMarker.setMap(null);
     }
 
 
 };
 
-SMESGMap.prototype.addLabel = function (labelContent, labelLat, labelLng) {
+SMESGMap.prototype.updateMarker = function (marker) {
+    "use strict";
+
+    //Capture local reference of map for use in click functions
+    var self = this;
+
+    var markerLat, markerLng, markerTitle, markerIcon, nineFigureNo, infoWindowContent, eventListeners;
+    var mapMarker, icon;
+
+    markerLat = marker.lat;
+    markerLng = marker.lng;
+    markerTitle = marker.title;
+    markerIcon = marker.icon;
+    nineFigureNo = marker.nineFigureNo;
+    infoWindowContent = marker.infoWindowContent;
+
+
+    for (var i = 0; i < self.markers.length; i++) {
+        if (self.markers[i].nineFigureNo === nineFigureNo) {
+            mapMarker = self.markers[i];
+            break;
+        }
+    }
+
+    //If a marker was found and defined continue processing
+    if (mapMarker) {
+        icon = {
+            url: markerIcon + ".svg",
+            size: new google.maps.Size(self.markerSize, self.markerSize),
+            scaledSize: new google.maps.Size(self.markerSize, self.markerSize)
+        };
+
+        mapMarker.setIcon(icon);
+        mapMarker.setPosition(new google.maps.LatLng(markerLat, markerLng));
+        mapMarker.setTitle(markerTitle);
+        mapMarker.infoContent = infoWindowContent;
+    }
+
+    for (var j = 0; j < self.markers.length; j++) {
+        if (self.markers[j].nineFigureNo === nineFigureNo) {
+            self.markers.splice(j, 1);
+            break;
+        }
+    }
+
+};
+
+SMESGMap.prototype.addLabel = function (label) {
     "use strict";
 
     var self = this;
+    var labelContent, nineFigureNo, labelLat, labelLng;
+
+    labelLat = label.lat;
+    labelLng = label.lng;
+    labelContent = label.label;
+    nineFigureNo = label.nineFigureNo;
 
     var mapLabel = new MapLabel({
         text: labelContent,
@@ -193,7 +257,8 @@ SMESGMap.prototype.addLabel = function (labelContent, labelLat, labelLng) {
         fontColor: 'rgba(28, 43, 139, 0.87)',
         strokeColor: 'rgba(245, 245, 245, 0.87)',
         fontSize: 12,
-        align: 'center'
+        align: 'center',
+        nineFigureNo: nineFigureNo
     });
 
     self.labels.push(mapLabel);
@@ -201,6 +266,32 @@ SMESGMap.prototype.addLabel = function (labelContent, labelLat, labelLng) {
 
 };
 
+SMESGMap.prototype.updateLabel = function (label) {
+    "use strict";
+
+    var self = this;
+    var labelContent, nineFigureNo, labelLat, labelLng;
+    var mapLabel;
+
+    labelLat = label.lat;
+    labelLng = label.lng;
+    labelContent = label.label;
+    nineFigureNo = label.nineFigureNo;
+
+    for (var i = 0; i < self.labels.length; i++) {
+        if (self.labels[i].nineFigureNo === nineFigureNo) {
+            mapLabel = self.labels[i];
+            break;
+        }
+    }
+
+    //If a marker was found and defined continue processing
+    if (mapLabel) {
+        mapLabel.set("text", labelContent);
+        mapLabel.set("position", new google.maps.LatLng(labelLat, labelLng));
+    }
+
+};
 
 SMESGMap.prototype.setZoomLevel = function () {
     "use strict";

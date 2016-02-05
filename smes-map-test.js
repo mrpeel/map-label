@@ -23,6 +23,31 @@ function setupMap() {
 
     loadMarks();
 
+    window.setTimeout(function () {
+
+        var marker = {};
+        var label = {};
+
+        marker.lat = -37.8192756;
+        marker.lng = 144.97323333;
+        marker.title = "PCM111570014";
+        marker.icon = "defective";
+        marker.nineFigureNo = 111570014;
+        marker.infoWindowContent =
+            '"<p class="mdl-color-text--primary"><b>PCM111570014</b></p><hr><p>NOT A Nine Figure Number: 111570014</p><p>Status: OK</p><p>SCN: No</p><p>Zone: 55</p><p>Easting: 321572.6</p><p>Northing: 5813224.1</p><p>AHD Height: </p><p>Ellipsoid Height: </p><p>GDA94 Technique: TRANSFORMED</p><p>AHD Technique: </p><hr><button id="sketch111570014" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color-text--primary smes-button fade-in">&nbsp;&nbsp;View Mark Sketch&nbsp;&nbsp;</button><button id="report111570014" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color-text--primary smes-button fade-in">&nbsp;&nbsp;View Mark Report&nbsp;&nbsp;</button>"';
+
+        smesMap.updateMarker(marker);
+
+
+        label.lat = -37.8192756;
+        label.lng = 144.97323333;
+        label.label = "Not PCM111570014";
+        label.nineFigureNo = 111570014;
+
+        smesMap.updateLabel(label);
+
+    }, 30000);
+
 }
 
 function requestMarkInformation() {
@@ -65,6 +90,8 @@ function loadMarks() {
     for (var i = 0; i < testMarkStore.newIndex.length; i++) {
 
         var eventListeners = {};
+        var marker = {};
+        var label = {};
 
         surveyMark = testMarkStore.markData[testMarkStore.newIndex[i]].data;
         address = testMarkStore.markData[testMarkStore.newIndex[i]].address || '';
@@ -74,11 +101,13 @@ function loadMarks() {
         eventListeners.domready = domReadyHandler(surveyMark.nineFigureNumber);
         eventListeners.click = markClickHandler(surveyMark.nineFigureNumber, surveyMark.latitude, surveyMark.longitude);
 
-        smesMap.addMarker(surveyMark.name,
-            surveyMark.latitude,
-            surveyMark.longitude,
-            iconName,
-            '<p class="mdl-color-text--primary"><b>' + surveyMark.name + '</b></p><hr>' +
+        marker.lat = surveyMark.latitude;
+        marker.lng = surveyMark.longitude;
+        marker.title = surveyMark.name;
+        marker.icon = iconName;
+        marker.nineFigureNo = surveyMark.nineFigureNumber;
+        marker.eventListeners = eventListeners;
+        marker.infoWindowContent = '<p class="mdl-color-text--primary"><b>' + surveyMark.name + '</b></p><hr>' +
             '<p>Nine Figure Number: ' + surveyMark.nineFigureNumber + '</p>' +
             '<p>Status: ' + surveyMark.status + '</p>' +
             '<p>SCN: ' + surveyMark.scn + '</p>' +
@@ -91,23 +120,23 @@ function loadMarks() {
             '<p>AHD Technique: ' + surveyMark.ahdTechnique + '</p>' +
             '<hr>' +
             '<button id="sketch' + surveyMark.nineFigureNumber + '" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color-text--primary smes-button fade-in">&nbsp;&nbsp;View Mark Sketch&nbsp;&nbsp;</button>' +
-            '<button id="report' + surveyMark.nineFigureNumber + '" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color-text--primary smes-button fade-in">&nbsp;&nbsp;View Mark Report&nbsp;&nbsp;</button>',
-            eventListeners);
+            '<button id="report' + surveyMark.nineFigureNumber + '" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color-text--primary smes-button fade-in">&nbsp;&nbsp;View Mark Report&nbsp;&nbsp;</button>';
 
 
-        smesMap.addLabel(surveyMark.name,
-            surveyMark.latitude,
-            surveyMark.longitude);
+        smesMap.addMarker(marker);
 
+        label.lat = surveyMark.latitude;
+        label.lng = surveyMark.longitude;
+        label.label = surveyMark.name;
+        label.nineFigureNo = surveyMark.nineFigureNumber;
+
+        smesMap.addLabel(label);
 
     }
 
 
     //Call the zoom level to show / hide marks and labels as required
-    window.setTimeout(function () {
-        console.log("Set zoom");
-        smesMap.setZoomLevel();
-    }, 0);
+    smesMap.setZoomLevel();
 }
 
 function markClickHandler(nineFigureNumber, lat, lng) {
