@@ -82,7 +82,7 @@ function displayZoomMessage() {
 
 function loadMarks() {
     //Work through the new markers and add to the map, then work through updated markers and update on the map
-    var surveyMark, address, iconName;
+    var surveyMark, address, markType;
 
     console.log("loadMarks");
 
@@ -95,7 +95,7 @@ function loadMarks() {
 
         surveyMark = testMarkStore.markData[testMarkStore.newIndex[n]].data;
         address = testMarkStore.markData[testMarkStore.newIndex[n]].address || '';
-        iconName = returnMarkerIconType(surveyMark);
+        markType = returnMarkType(surveyMark);
 
 
         eventListeners.domready = domReadyHandler(surveyMark.nineFigureNumber);
@@ -104,13 +104,12 @@ function loadMarks() {
         marker.lat = surveyMark.latitude;
         marker.lng = surveyMark.longitude;
         marker.title = surveyMark.name;
-        marker.icon = iconName;
+        marker.icon = markType.iconName;
         marker.nineFigureNo = surveyMark.nineFigureNumber;
         marker.eventListeners = eventListeners;
         marker.infoWindowContent = '<p class="mdl-color-text--primary"><b>' + surveyMark.name + '</b></p><hr>' +
             '<p>Nine Figure Number: ' + surveyMark.nineFigureNumber + '</p>' +
-            '<p>Status: ' + surveyMark.status + '</p>' +
-            '<p>SCN: ' + surveyMark.scn + '</p>' +
+            '<p><i>' + markType.markDetails + '</i></p>' +
             '<p>Zone: ' + surveyMark.zone + '</p>' +
             '<p>Easting: ' + surveyMark.easting + '</p>' +
             '<p>Northing: ' + surveyMark.northing + '</p>' +
@@ -141,18 +140,17 @@ function loadMarks() {
         var uLabel = {};
 
         surveyMark = testMarkStore.markData[testMarkStore.newIndex[u]].data;
-        iconName = returnMarkerIconType(surveyMark);
+        markType = returnMarkType(surveyMark);
 
 
         uMarker.lat = surveyMark.latitude;
         uMarker.lng = surveyMark.longitude;
         uMarker.title = surveyMark.name;
-        uMarker.icon = iconName;
+        uMarker.icon = markType.iconName;
         uMarker.nineFigureNo = surveyMark.nineFigureNumber;
         uMarker.infoWindowContent = '<p class="mdl-color-text--primary"><b>' + surveyMark.name + '</b></p><hr>' +
             '<p>Nine Figure Number: ' + surveyMark.nineFigureNumber + '</p>' +
-            '<p>Status: ' + surveyMark.status + '</p>' +
-            '<p>SCN: ' + surveyMark.scn + '</p>' +
+            '<p><i>' + markType.markDetails + '</i></p>' +
             '<p>Zone: ' + surveyMark.zone + '</p>' +
             '<p>Easting: ' + surveyMark.easting + '</p>' +
             '<p>Northing: ' + surveyMark.northing + '</p>' +
@@ -221,19 +219,19 @@ function domReadyHandler(nineFigureNumber) {
 
 }
 
-function returnMarkerIconType(surveyMark) {
-    var isSCN, isPCM, hasAHD, isSCNGDA94, isSCNAHD;
+function returnMarkType(surveyMark) {
+    var markType = {};
+    var isSCN = false,
+        isPCM = false,
+        hasAHD = false,
+        isSCNGDA94 = false,
+        isSCNAHD = false,
+        isDefective = hasAHD;
 
-    //Set default values for each type
-    isSCN = false;
-    isPCM = false;
-    hasAHD = false;
-    isSCNGDA94 = false;
-    isSCNAHD = false;
 
     if (surveyMark.status != "OK") {
         //Defective mark
-        return "defective";
+        isDefective = true;
     } else {
         //OK mark - determine other values
         if (surveyMark.scn === "Yes") {
@@ -260,23 +258,34 @@ function returnMarkerIconType(surveyMark) {
         });
 
         //Now all of the source values have been retrieved, work through possible combinations to determine correct symbol
-        if (!isSCN && !hasAHD) {
-            return "gda94approx-pm";
-        } else if (!isSCN && hasAHD) {
-            return "ahdapprox-pm";
-        } else if (isSCN && isPCM) {
-            return "scn-gda94-pcm";
-        } else if (isSCN && !hasAHD && !isPCM) {
-            return "scn-gda94-pm";
-        } else if (isSCN && hasAHD && !isSCNGDA94) {
-            return "scn-ahd-pm";
-        } else if (isSCN && hasAHD && isSCNGDA94 && isSCNAHD) {
-            return "scn-gda94-ahd-pm";
-        } else if (isSCN && hasAHD && isSCNGDA94 && !isSCNAHD) {
-            return "scn-gda94-ahdapprox-pm";
+        if (isDefective) {
+            markType.iconName = "defective";
+            markType.markDetails = "Defective";
+
+        } else if (!isDefective && !isSCN && !hasAHD) {
+            markType.iconName = "gda94approx-pm";
+            markType.markDetails = "PM: non-SCN (GDA94)";
+        } else if (!isDefective && !isSCN && hasAHD) {
+            markType.iconName = "ahdapprox-pm";
+            markType.markDetails = "PM: non-SCN (GDA94), non-SCN (AHD)";
+        } else if (!isDefective && isSCN && isPCM) {
+            markType.iconName = "scn-gda94-pcm";
+            markType.markDetails = "PCM: SCN (GDA94)";
+        } else if (!isDefective && isSCN && !hasAHD && !isPCM) {
+            markType.iconName = "scn-gda94-pm";
+            markType.markDetails = "PM: SCN (GDA94)";
+        } else if (!isDefective && isSCN && hasAHD && !isSCNGDA94) {
+            markType.iconName = "scn-ahd-pm";
+            markType.markDetails = "PM: non-SCN (GDA94), SCN (AHD)";
+        } else if (!isDefective && isSCN && hasAHD && isSCNGDA94 && isSCNAHD) {
+            markType.iconName = "scn-gda94-ahd-pm";
+            markType.markDetails = "PM: SCN (GDA94), SCN (AHD)";
+        } else if (!isDefective && isSCN && hasAHD && isSCNGDA94 && !isSCNAHD) {
+            markType.iconName = "scn-gda94-ahdapprox-pm";
+            markType.markDetails = "PM: non-SCN (GDA94)";
         }
     }
 
-
+    return markType;
 
 }

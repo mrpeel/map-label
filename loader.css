@@ -1,0 +1,190 @@
+.search-box {
+    width: 250px;
+}
+body {
+    overflow: hidden;
+}
+.spinner div {
+    width: 10px;
+    height: 10px;
+    position: relative;
+    left: -20px;
+    /*top: 40px;*/
+    background-color: rgb(90, 200, 250);
+    border-radius: 50%;
+    animation: move 4s infinite cubic-bezier(.2, .64, .81, .23);
+    z-index: 100;
+}
+.spinner div {
+    position: absolute;
+}
+.spinner div:nth-child(2) {
+    animation-delay: 150ms;
+}
+.spinner div:nth-child(3) {
+    animation-delay: 300ms;
+}
+.spinner div:nth-child(4) {
+    animation-delay: 450ms;
+}
+@keyframes move {
+    0% {
+        left: 0;
+    }
+    75% {
+        left: 100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+/*.progress-container {
+    left: 0;
+    position: relative;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+.progress {
+    background-color: rgb(229, 233, 235);
+    height: 0.25em;
+    position: relative;
+    width: 23em;
+}
+.progress-bar {
+    background-size: 23em 0.25em;
+    height: 100%;
+    position: relative;
+    background-image: linear-gradient(to right, rgb(76, 217, 100), rgb(90, 200, 250), rgb(0, 122, 255), rgb(52, 170, 220), rgb(88, 86, 214), rgb(255, 45, 85));
+    background-image: -o-linear-gradient(to right, rgb(76, 217, 100), rgb(90, 200, 250), rgb(0, 122, 255), rgb(52, 170, 220), rgb(88, 86, 214), rgb(255, 45, 85));
+    background-image: -ms-linear-gradient(to right, rgb(76, 217, 100), rgb(90, 200, 250), rgb(0, 122, 255), rgb(52, 170, 220), rgb(88, 86, 214), rgb(255, 45, 85));
+    background-image: -webkit-linear-gradient(to right, rgb(76, 217, 100), rgb(90, 200, 250), rgb(0, 122, 255), rgb(52, 170, 220), rgb(88, 86, 214), rgb(255, 45, 85));
+    background-image: -moz-linear-gradient(to right, rgb(76, 217, 100), rgb(90, 200, 250), rgb(0, 122, 255), rgb(52, 170, 220), rgb(88, 86, 214), rgb(255, 45, 85));
+    animation: cssload-width 3.45s cubic-bezier(0.45, 0, 1, 1) infinite;
+    -o-animation: cssload-width 3.45s cubic-bezier(0.45, 0, 1, 1) infinite;
+    -ms-animation: cssload-width 3.45s cubic-bezier(0.45, 0, 1, 1) infinite;
+    -webkit-animation: cssload-width 3.45s cubic-bezier(0.45, 0, 1, 1) infinite;
+    -moz-animation: cssload-width 3.45s cubic-bezier(0.45, 0, 1, 1) infinite;
+}
+.progress-shadow {
+    height: 4em;
+    position: absolute;
+    top: 100%;
+    width: 100%;
+    transform: skew(45deg);
+    -o-transform: skew(45deg);
+    -ms-transform: skew(45deg);
+    -webkit-transform: skew(45deg);
+    -moz-transform: skew(45deg);
+    transform-origin: 0 0;
+    -o-transform-origin: 0 0;
+    -ms-transform-origin: 0 0;
+    -webkit-transform-origin: 0 0;
+    -moz-transform-origin: 0 0;
+    background-image: linear-gradient(to bottom, rgb(234, 236, 238), transparent);
+    background-image: -o-linear-gradient(to bottom, rgb(234, 236, 238), transparent);
+    background-image: -ms-linear-gradient(to bottom, rgb(234, 236, 238), transparent);
+    background-image: -webkit-linear-gradient(to bottom, rgb(234, 236, 238), transparent);
+    background-image: -moz-linear-gradient(to bottom, rgb(234, 236, 238), transparent);
+}
+@keyframes cssload-width {
+    0%,
+    100% {
+        transition-timing-function: cubic-bezier(1, 0, 0.65, 0.85);
+    }
+    0% {
+        width: 0;
+    }
+    100% {
+        width: 100%;
+    }
+}
+@-o-keyframes cssload-width {
+    0%,
+    100% {
+        -o-transition-timing-function: cubic-bezier(1, 0, 0.65, 0.85);
+    }
+    0% {
+        width: 0;
+    }
+    100% {
+        width: 100%;
+    }
+}
+@-ms-keyframes cssload-width {
+    0%,
+    100% {
+        -ms-transition-timing-function: cubic-bezier(1, 0, 0.65, 0.85);
+    }
+    0% {
+        width: 0;
+    }
+    100% {
+        width: 100%;
+    }
+}
+@-webkit-keyframes cssload-width {
+    0%,
+    100% {
+        -webkit-transition-timing-function: cubic-bezier(1, 0, 0.65, 0.85);
+    }
+    0% {
+        width: 0;
+    }
+    100% {
+        width: 100%;
+    }
+}
+@-moz-keyframes cssload-width {
+    0%,
+    100% {
+        -moz-transition-timing-function: cubic-bezier(1, 0, 0.65, 0.85);
+    }
+    0% {
+        width: 0;
+    }
+    100% {
+        width: 100%;
+    }
+}*/
+
+
+/*.loader {
+    height: 3px;
+    width: 100%;
+    display: block;
+    top: 0px;
+    overflow: hidden;
+    background-color: #607d8b;
+    visibility: visible;
+}
+.loader:before {
+    display: block;
+    content: "";
+    left: -50px;
+    width: 100%;
+    height: 3px;
+    background-color: #00bcd4;
+    animation: loading 2s linear infinite;
+}
+@keyframes loading {
+    from {
+        left: -50px;
+        width: 5%;
+    }
+    50% {
+        width: 30%;
+    }
+    70% {
+        width: 70%;
+    }
+    80% {
+        left: 50%;
+    }
+    95% {
+        left: 120%;
+    }
+    to {
+        left: 100%;
+    }
+}*/
