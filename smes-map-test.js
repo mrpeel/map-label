@@ -23,30 +23,7 @@ function setupMap() {
 
     loadMarks();
 
-    window.setTimeout(function () {
 
-        var marker = {};
-        var label = {};
-
-        marker.lat = -37.8192756;
-        marker.lng = 144.97323333;
-        marker.title = "PCM111570014";
-        marker.icon = "defective";
-        marker.nineFigureNo = 111570014;
-        marker.infoWindowContent =
-            '"<p class="mdl-color-text--primary"><b>PCM111570014</b></p><hr><p>NOT A Nine Figure Number: 111570014</p><p>Status: OK</p><p>SCN: No</p><p>Zone: 55</p><p>Easting: 321572.6</p><p>Northing: 5813224.1</p><p>AHD Height: </p><p>Ellipsoid Height: </p><p>GDA94 Technique: TRANSFORMED</p><p>AHD Technique: </p><hr><button id="sketch111570014" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color-text--primary smes-button fade-in">&nbsp;&nbsp;View Mark Sketch&nbsp;&nbsp;</button><button id="report111570014" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color-text--primary smes-button fade-in">&nbsp;&nbsp;View Mark Report&nbsp;&nbsp;</button>"';
-
-        smesMap.updateMarker(marker);
-
-
-        label.lat = -37.8192756;
-        label.lng = 144.97323333;
-        label.label = "Not PCM111570014";
-        label.nineFigureNo = 111570014;
-
-        smesMap.updateLabel(label);
-
-    }, 30000);
 
 }
 
@@ -82,9 +59,15 @@ function displayZoomMessage() {
 
 function loadMarks() {
     //Work through the new markers and add to the map, then work through updated markers and update on the map
-    var surveyMark, address, markType;
+    var surveyMark, address, markType, closeButton, cardDiv;
 
     console.log("loadMarks");
+
+    closeButton = '<button id="close-info-box" class="close-button mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">' +
+        '<i class="material-icons">close</i>' +
+        '</button>';
+
+    cardDiv = '<div class="mdl-card infobox mdl-shadow--3dp overflow-x-visible">';
 
     //Add new marks
     for (var n = 0; n < testMarkStore.newIndex.length; n++) {
@@ -104,22 +87,25 @@ function loadMarks() {
         marker.lat = surveyMark.latitude;
         marker.lng = surveyMark.longitude;
         marker.title = surveyMark.name;
-        marker.icon = markType.iconName;
+        marker.icon = "symbology/" + markType.iconName;
         marker.nineFigureNo = surveyMark.nineFigureNumber;
         marker.eventListeners = eventListeners;
-        marker.infoWindowContent = '<p class="mdl-color-text--primary"><b>' + surveyMark.name + '</b></p><hr>' +
-            '<p>Nine Figure Number: ' + surveyMark.nineFigureNumber + '</p>' +
-            '<p><i>' + markType.markDetails + '</i></p>' +
-            '<p>Zone: ' + surveyMark.zone + '</p>' +
-            '<p>Easting: ' + surveyMark.easting + '</p>' +
-            '<p>Northing: ' + surveyMark.northing + '</p>' +
-            '<p>AHD Height: ' + surveyMark.ahdHeight + '</p>' +
-            '<p>Ellipsoid Height: ' + surveyMark.ellipsoidHeight + '</p>' +
-            '<p>GDA94 Technique: ' + surveyMark.gda94Technique + '</p>' +
-            '<p>AHD Technique: ' + surveyMark.ahdTechnique + '</p>' +
-            '<hr>' +
-            '<button id="sketch' + surveyMark.nineFigureNumber + '" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color-text--primary smes-button fade-in">&nbsp;&nbsp;View Mark Sketch&nbsp;&nbsp;</button>' +
-            '<button id="report' + surveyMark.nineFigureNumber + '" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color-text--primary smes-button fade-in">&nbsp;&nbsp;View Mark Report&nbsp;&nbsp;</button>';
+        marker.infoWindowContent = cardDiv + ' <div class="mdl-card__title mdl-color-text--white"><div><h2 class="mdl-card__title-text">' + surveyMark.name + '</h2></div>' +
+            '<div>' + surveyMark.nineFigureNumber + '</div>' +
+            '<div><i>' + markType.markDetails + '</i></div>' +
+            closeButton + '</div>' +
+            '<div class="mdl-card__supporting-text">' +
+            '<div>Zone: ' + surveyMark.zone + '</div>' +
+            '<div>Easting: ' + surveyMark.easting + '</div>' +
+            '<div>Northing: ' + surveyMark.northing + '</div>' +
+            '<div>AHD Height: ' + surveyMark.ahdHeight + '</div>' +
+            '<div>Ellipsoid Height: ' + surveyMark.ellipsoidHeight + '</div>' +
+            '<div>GDA94 Technique: ' + surveyMark.gda94Technique + '</div>' +
+            '<div>AHD Technique: ' + surveyMark.ahdTechnique + '</div>' +
+            '</div><div class="mdl-card__actions mdl-card--border">' +
+            '<button id="sketch' + surveyMark.nineFigureNumber + '" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-color-text--primary smes-button fade-in">Sketch</button>' +
+            '<button id="report' + surveyMark.nineFigureNumber + '" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-color-text--primary smes-button fade-in">Report</button>' +
+            '</div></div>';
 
 
         smesMap.addMarker(marker);
@@ -146,18 +132,18 @@ function loadMarks() {
         uMarker.lat = surveyMark.latitude;
         uMarker.lng = surveyMark.longitude;
         uMarker.title = surveyMark.name;
-        uMarker.icon = markType.iconName;
+        uMarker.icon = "symbology/" + markType.iconName;
         uMarker.nineFigureNo = surveyMark.nineFigureNumber;
-        uMarker.infoWindowContent = '<p class="mdl-color-text--primary"><b>' + surveyMark.name + '</b></p><hr>' +
-            '<p>Nine Figure Number: ' + surveyMark.nineFigureNumber + '</p>' +
-            '<p><i>' + markType.markDetails + '</i></p>' +
-            '<p>Zone: ' + surveyMark.zone + '</p>' +
-            '<p>Easting: ' + surveyMark.easting + '</p>' +
-            '<p>Northing: ' + surveyMark.northing + '</p>' +
-            '<p>AHD Height: ' + surveyMark.ahdHeight + '</p>' +
-            '<p>Ellipsoid Height: ' + surveyMark.ellipsoidHeight + '</p>' +
-            '<p>GDA94 Technique: ' + surveyMark.gda94Technique + '</p>' +
-            '<p>AHD Technique: ' + surveyMark.ahdTechnique + '</p>' +
+        uMarker.infoWindowContent = '<p class="mdl-color-text--primary"><b>' + surveyMark.name + '</b></div><hr>' +
+            '<div>Nine Figure Number: ' + surveyMark.nineFigureNumber + '</div>' +
+            '<div><i>' + markType.markDetails + '</i></div>' +
+            '<div>Zone: ' + surveyMark.zone + '</div>' +
+            '<div>Easting: ' + surveyMark.easting + '</div>' +
+            '<div>Northing: ' + surveyMark.northing + '</div>' +
+            '<div>AHD Height: ' + surveyMark.ahdHeight + '</div>' +
+            '<div>Ellipsoid Height: ' + surveyMark.ellipsoidHeight + '</div>' +
+            '<div>GDA94 Technique: ' + surveyMark.gda94Technique + '</div>' +
+            '<div>AHD Technique: ' + surveyMark.ahdTechnique + '</div>' +
             '<hr>' +
             '<button id="sketch' + surveyMark.nineFigureNumber + '" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color-text--primary smes-button fade-in">&nbsp;&nbsp;View Mark Sketch&nbsp;&nbsp;</button>' +
             '<button id="report' + surveyMark.nineFigureNumber + '" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color-text--primary smes-button fade-in">&nbsp;&nbsp;View Mark Report&nbsp;&nbsp;</button>';
@@ -264,25 +250,25 @@ function returnMarkType(surveyMark) {
 
         } else if (!isDefective && !isSCN && !hasAHD) {
             markType.iconName = "gda94approx-pm";
-            markType.markDetails = "PM: non-SCN (GDA94)";
+            markType.markDetails = "Non-SCN (GDA94)";
         } else if (!isDefective && !isSCN && hasAHD) {
             markType.iconName = "ahdapprox-pm";
-            markType.markDetails = "PM: non-SCN (GDA94), non-SCN (AHD)";
+            markType.markDetails = "Non-SCN (GDA94), non-SCN (AHD)";
         } else if (!isDefective && isSCN && isPCM) {
             markType.iconName = "scn-gda94-pcm";
-            markType.markDetails = "PCM: SCN (GDA94)";
+            markType.markDetails = "SCN (GDA94)";
         } else if (!isDefective && isSCN && !hasAHD && !isPCM) {
             markType.iconName = "scn-gda94-pm";
-            markType.markDetails = "PM: SCN (GDA94)";
+            markType.markDetails = "SCN (GDA94)";
         } else if (!isDefective && isSCN && hasAHD && !isSCNGDA94) {
             markType.iconName = "scn-ahd-pm";
-            markType.markDetails = "PM: non-SCN (GDA94), SCN (AHD)";
+            markType.markDetails = "Non-SCN (GDA94), SCN (AHD)";
         } else if (!isDefective && isSCN && hasAHD && isSCNGDA94 && isSCNAHD) {
             markType.iconName = "scn-gda94-ahd-pm";
-            markType.markDetails = "PM: SCN (GDA94), SCN (AHD)";
+            markType.markDetails = "SCN (GDA94), SCN (AHD)";
         } else if (!isDefective && isSCN && hasAHD && isSCNGDA94 && !isSCNAHD) {
             markType.iconName = "scn-gda94-ahdapprox-pm";
-            markType.markDetails = "PM: non-SCN (GDA94)";
+            markType.markDetails = "Non-SCN (GDA94)";
         }
     }
 
