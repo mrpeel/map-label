@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+
+
+
+</head>
+
+<body>
+    <h1>Test Fetch API</h1>
+
+
+
+
+</body>
+<script>
+	window.Promise || document.write("<script src=Promise.min.js><\/script>");
+	window.fetch || document.write("<script src=fetch.min.js><\/script>");
+</script>
+<script>
+  /* Induce a 429 response - which is not CORS enabled and will cause an error */
+	for(i=0; i< 40;i ++) {
+
+	
+	fetch("https://maps.land.vic.gov.au/lvis/services/smesDataDelivery/getMarkInformation?searchType=Location&latitude=-37.813942&longitude=144.976&radius=0.75&format=Full", {mode: 'cors'})  
+	  .then(  
+		function(response) { 
+			return response.json();
+		  }).then(function(json) {
+			if(json.data) {
+				console.log('data: ', json.data);
+			} else {
+				console.log('web service error: ', json.messages);
+			}
+			
+			
+		  }).catch(function(ex) {
+			if(ex.message.indexOf("429")>-1) {
+				console.log('429 error: ', ex);
+			};
+			console.log('Failed: ', ex);
+		  });
+
+	}
+    
+
+</script>
+
+</html>
+
+	 
+	 
+	 
