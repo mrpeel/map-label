@@ -1,8 +1,8 @@
-/** GooMap class encapsulating the maps functionality required to load a map with custom controls,
+/** SMESGMap class encapsulating the maps functionality required to load a map with custom controls,
     set-up markers and and infor windows
 */
 
-/*global Promise, google, document, navigator, console, MapLabel, InfoBox*/
+/*global Promise, google, document, navigator, console, MapLabel, InfoBox, window*/
 
 /** 
  * 
@@ -53,8 +53,8 @@ var SMESGMap = function (elementId, options) {
     this.infoBox = new InfoBox({
         content: document.getElementById("infobox"),
         disableAutoPan: false,
-        maxWidth: 400,
-        pixelOffset: new google.maps.Size(-200, 0),
+        maxWidth: 440,
+        pixelOffset: new google.maps.Size(-220, 0),
         zIndex: 6,
         /*boxStyle: {
             background: "url('http://google-maps-utility-library-v3.googlecode.com/svn/trunk/infobox/examples/tipbox.gif') no - repeat",
@@ -208,9 +208,13 @@ SMESGMap.prototype.addMarker = function (marker) {
             eventListeners.click.apply();
         }
 
+        //Make sure that this doesn't fire before the rendering has completed
         if (eventListeners && eventListeners.domready) {
-            eventListeners.domready.apply(this);
+            window.setTimeout(function () {
+                eventListeners.domready.apply(this);
+            }, 0);
         }
+
 
     });
 
