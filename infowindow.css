@@ -182,9 +182,27 @@
 }
 .about-box {
     min-height: 250px;
-    min-width: 400px;
-    top: calc(50% - 200px);
-    left: calc(50% - 200px);
+    max-height: 450px;
+    min-width: 450px;
+    top: calc(50% - 225px);
+    left: calc(50% - 225px);
+}
+.about-title {
+    padding-top: 25px;
+    padding-bottom: 25px;
+}
+.about-content-header {
+    color: #1565C0;
+}
+.about-text {
+    text-overflow: ellipsis;
+    overflow-y: scroll;
+}
+.about-actions {
+    flex: auto;
+    height: 60px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 .about-button {
     right: 0;
