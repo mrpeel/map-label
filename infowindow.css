@@ -180,6 +180,17 @@
 .smes-button {
     color: #1565C0;
 }
+.about-box {
+    min-height: 250px;
+    min-width: 400px;
+    top: calc(50% - 200px);
+    left: calc(50% - 200px);
+}
+.about-button {
+    right: 0;
+    flex: none;
+    width: 100px;
+}
 .horiz-spacer {
     height: 24px;
     width: 24px;
@@ -187,4 +198,12 @@
 }
 .card-symbol {
     background-color: #E3F2FD;
+}
+.screen-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.25);
 }
