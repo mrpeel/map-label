@@ -23,8 +23,25 @@ function setupMap() {
 
     loadMarks();
 
+    var mapStyle = document.getElementById("map-style");
+
+    mapStyle.addEventListener("change", function () {
+        changeMapStyle(mapStyle.value);
+    });
 
 
+}
+
+function changeMapStyle(styleName) {
+    var styleDetails;
+
+    if (styleName !== "google") {
+        styleDetails = smesMap.mapStyles[styleName]
+    }
+
+    smesMap.map.setOptions({
+        styles: styleDetails
+    });
 }
 
 function requestMarkInformation() {
