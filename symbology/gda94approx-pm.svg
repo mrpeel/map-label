@@ -15,7 +15,10 @@
    id="svg4691"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="gda94approx-pm.svg">
+   sodipodi:docname="gda94approx-pm.svg"
+   inkscape:export-filename="/Users/neilkloot/Dev/map-label/symbology/gda94approx-pm.png"
+   inkscape:export-xdpi="31.639999"
+   inkscape:export-ydpi="31.639999">
   <defs
      id="defs4693" />
   <sodipodi:namedview
@@ -26,15 +29,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="3.3983648"
-     inkscape:cx="43.711934"
+     inkscape:cx="-4.6936992"
      inkscape:cy="55.88587"
      inkscape:document-units="px"
      inkscape:current-layer="layer2"
      showgrid="true"
-     inkscape:window-width="1680"
-     inkscape:window-height="988"
-     inkscape:window-x="1672"
-     inkscape:window-y="-8"
+     inkscape:window-width="1394"
+     inkscape:window-height="855"
+     inkscape:window-x="46"
+     inkscape:window-y="1"
      inkscape:window-maximized="1"
      units="px">
     <inkscape:grid
@@ -49,7 +52,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>

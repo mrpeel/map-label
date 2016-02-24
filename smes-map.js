@@ -45,7 +45,7 @@ var SMESGMap = function (elementId, options) {
     };
 
     this.mapOptions = options.mapOptions;
-
+    this.safariOverrides = options.isSafari;
     this.markers = [];
     this.labels = [];
     this.currentZoom = 1;
@@ -145,7 +145,7 @@ SMESGMap.prototype.getMapState = function () {
         return mapState;
     }
 
-    mapState = JSON.parse(window.localStorage.getItem('map-state') || "");
+    mapState = JSON.parse(window.localStorage.getItem('map-state')) || {};
 
     return mapState;
 
@@ -226,7 +226,7 @@ SMESGMap.prototype.addMarker = function (marker) {
 
 
     var icon = {
-        url: markerIcon + ".svg",
+        url: markerIcon + ".png",
         size: new google.maps.Size(self.markerSize, self.markerSize),
         scaledSize: new google.maps.Size(self.markerSize, self.markerSize)
     };
@@ -311,7 +311,7 @@ SMESGMap.prototype.updateMarker = function (marker) {
     //If a marker was found and defined continue processing
     if (mapMarker) {
         icon = {
-            url: markerIcon + ".svg",
+            url: markerIcon + ".png",
             size: new google.maps.Size(self.markerSize, self.markerSize),
             scaledSize: new google.maps.Size(self.markerSize, self.markerSize)
         };
