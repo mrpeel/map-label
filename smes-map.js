@@ -9,15 +9,24 @@
 var SMESGMap = function (elementId, options) {
     "use strict";
 
-    var melbourneCenter = new google.maps.LatLng(-37.813942, 144.9711861);
+    var mapState = this.getMapState() || {};
+    var mapCenter;
+
+    if (mapState.lat && mapState.lng) {
+        mapCenter = new google.maps.LatLng(mapState.lat, mapState.lng);
+    } else {
+        //default to centre of melbourne if nothing saved
+        mapCenter = new google.maps.LatLng(-37.813942, 144.9711861);
+    }
 
     this.setupMapStyles();
+    this.mapStyleName = mapState.mapStyleName || "iovation";
 
     options = options || {};
 
     options.mapOptions = options.mapOptions || {
-        center: melbourneCenter,
-        zoom: 15,
+        center: mapCenter,
+        zoom: mapState.zoom || 15,
         mapTypeId: google.maps.MapTypeId.ROADMAP,
 
         mapTypeControl: false,
@@ -32,7 +41,7 @@ var SMESGMap = function (elementId, options) {
         },
         panControl: false,
         rotateControl: false,
-        styles: this.mapStyles.iovation
+        styles: this.mapStyles[this.mapStyleName]
     };
 
     this.mapOptions = options.mapOptions;
@@ -53,11 +62,6 @@ var SMESGMap = function (elementId, options) {
         maxWidth: 440,
         pixelOffset: new google.maps.Size(-220, 0),
         zIndex: 6,
-        /*boxStyle: {
-            background: "url('http://google-maps-utility-library-v3.googlecode.com/svn/trunk/infobox/examples/tipbox.gif') no - repeat",
-            opacity: 0.75 //,
-                //width: "280px"
-        },*/
         closeBoxURL: "",
         infoBoxClearance: new google.maps.Size(4, 4)
     });
@@ -90,6 +94,7 @@ var SMESGMap = function (elementId, options) {
 
     google.maps.event.addListener(self.map, 'idle', function () {
         self.resizeIcons();
+        self.saveMapState();
     });
 
 
@@ -124,8 +129,51 @@ var SMESGMap = function (elementId, options) {
 
 
     //Attempt oto move map to current user coordinates
-    self.geoLocate();
+    //self.geoLocate();
 
+
+};
+
+SMESGMap.prototype.getMapState = function () {
+    "use strict";
+
+    var smesGMap = this;
+    var mapState = {};
+
+
+    if (!window.localStorage) {
+        return mapState;
+    }
+
+    mapState = JSON.parse(window.localStorage.getItem('map-state') || "");
+
+    return mapState;
+
+};
+
+SMESGMap.prototype.saveMapState = function () {
+    "use strict";
+
+    var smesGMap = this;
+    var mapState = {};
+    var mapCenter = smesGMap.map.getCenter();
+
+    mapState.zoom = smesGMap.getZoom();
+    mapState.mapStyleName = smesGMap.mapStyleName;
+    mapState.lat = mapCenter.lat();
+    mapState.lng = mapCenter.lng();
+
+    if (!window.localStorage) {
+        return;
+    }
+
+
+    try {
+        window.localStorage.setItem('map-state', JSON.stringify(mapState));
+    } catch (e) {
+        //Give up
+        console.log("Write to local storage failed");
+    }
 
 };
 
@@ -233,6 +281,8 @@ SMESGMap.prototype.addMarker = function (marker) {
 
 
 };
+
+
 
 SMESGMap.prototype.updateMarker = function (marker) {
     "use strict";

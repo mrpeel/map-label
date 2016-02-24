@@ -17,7 +17,7 @@ function setupMap() {
 
     start = new Date();
     var mapOptions = {};
-    //startingUp = true;
+    startingUp = true;
     mapOptions.idle = requestMarkInformation;
     mapOptions.zoomChanged = displayZoomMessage;
 
@@ -27,20 +27,30 @@ function setupMap() {
         console.log('Time to create map: ' + (new Date() - start));
     }, 0);
 
-    var markStoreOptions = {};
-    markStoreOptions.loadMark = loadMark;
-    testMarkStore = new SMESMarkStore(markStoreOptions);
-    testMarkStore.retrieveStoredMarks();
-
-    window.setTimeout(function () {
-        console.log('Time to create mark store: ' + (new Date() - start));
-    }, 0);
-
     smesMap.setUpAutoComplete("autoComplete");
 
     window.setTimeout(function () {
         console.log('Time to set-up auto-complete: ' + (new Date() - start));
     }, 0);
+
+
+    var markStoreOptions = {};
+    markStoreOptions.loadMark = loadMark;
+    testMarkStore = new SMESMarkStore(markStoreOptions);
+    window.setTimeout(function () {
+        console.log('Time to create mark store: ' + (new Date() - start));
+    }, 0);
+
+    window.setTimeout(function () {
+        testMarkStore.retrieveStoredMarks();
+        startingUp = false;
+
+        window.setTimeout(function () {
+            console.log('Time to retrieve stored marks: ' + (new Date() - start));
+        }, 0);
+
+    }, 1000);
+
 
     /*window.setTimeout(function () {
       loadMarks();
@@ -86,7 +96,9 @@ function requestMarkInformation() {
     requestOptions.cLat = mapCenter.lat();
     requestOptions.cLong = mapCenter.lng();
     requestOptions.cRadius = radius;
-    requestOptions.finishedCallback = showZoomMessage;
+    requestOptions.finishedCallback = function () {
+        console.log("Completed loading from request");
+    };
     requestOptions.tooManyCallback = showZoomMessage;
 
     testMarkStore.requestMarkInformation(requestOptions);
@@ -121,7 +133,7 @@ function displayZoomMessage() {
 
 function loadMark(surveyMark, loadType) {
 
-    console.log("loadMark: " + surveyMark.nineFigureNumber);
+    //console.log("loadMark: " + surveyMark.nineFigureNumber);
 
     var markType;
     var closeButton = '<button id="close-info-box" class="close-button mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">' +
