@@ -15,10 +15,10 @@
    width="200"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="selected-scn-ahd-pm.svg"
-   inkscape:export-filename="/Users/neilkloot/Dev/map-label/symbology/selected-scn-ahd-pm.png"
-   inkscape:export-xdpi="22.950001"
-   inkscape:export-ydpi="22.950001">
+   sodipodi:docname="selected-base.svg"
+   inkscape:export-filename="/Users/neilkloot/Dev/map-label/symbology/selected-scn-gda94-pm.png"
+   inkscape:export-xdpi="40.5"
+   inkscape:export-ydpi="40.5">
   <sodipodi:namedview
      pagecolor="#ffffff"
      bordercolor="#666666"
@@ -28,29 +28,30 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="697"
-     inkscape:window-height="480"
-     id="namedview3524"
+     inkscape:window-width="710"
+     inkscape:window-height="587"
+     id="namedview3607"
      showgrid="false"
      inkscape:zoom="1.18"
-     inkscape:cx="100"
+     inkscape:cx="-22.881356"
      inkscape:cy="100"
-     inkscape:window-x="60"
-     inkscape:window-y="126"
+     inkscape:window-x="773"
+     inkscape:window-y="112"
      inkscape:window-maximized="0"
      inkscape:current-layer="svg4691" />
   <defs
      id="defs8">
     <filter
-       id="filter4524"
+       id="filter4982"
        style="color-interpolation-filters:sRGB"
-       height="1.12"
-       width="1.12"
-       y="-0.06"
-       x="-0.06">
+       height="1.39"
+       width="1.4"
+       y="-.25"
+       x="-.2">
       <feGaussianBlur
-         id="feGaussianBlur4526"
-         stdDeviation="2.7126698" />
+         id="feGaussianBlur4984"
+         stdDeviation="5 5"
+         result="blur" />
     </filter>
   </defs>
   <metadata
@@ -61,12 +62,11 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <g
-     transform="translate(2.9908349,0.37162661)"
      id="g3369">
     <circle
        r="77.5"
@@ -78,22 +78,14 @@
        transform="translate(0,68)"
        id="layer3">
       <path
-         style="fill:#2196f3;fill-opacity:0.99216003;stroke:#2196f3;stroke-width:3.31900001;stroke-opacity:0.97646999"
-         inkscape:connector-curvature="0"
-         d="m 149.69,-174.98 1.8788,3.2542 1.8788,3.2542 -3.7577,0 -3.7577,0 1.8788,-3.2542 z"
-         transform="matrix(8.689,0,0,3.9338,-1200.9,789.09)"
+         d="m149.69-174.98 1.8788 3.2542 1.8788 3.2542h-3.7577-3.7577l1.8788-3.2542z"
+         stroke-width="3.319"
+         stroke="#2196f3"
+         transform="matrix(8.689 0 0 3.9338 -1200.9 789.09)"
+         fill-opacity=".99216"
+         stroke-opacity=".97647"
+         fill="#2196f3"
          id="path4337" />
     </g>
-  </g>
-  <g
-     id="layer1"
-     transform="translate(38.647795,-897.60572)">
-    <ellipse
-       style="fill:none;fill-opacity:1;stroke:#1c9210;stroke-width:13.49321556;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       id="path5239"
-       cx="64.742035"
-       cy="988.28369"
-       rx="54.253391"
-       ry="54.253399" />
   </g>
 </svg>

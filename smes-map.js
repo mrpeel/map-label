@@ -5,22 +5,28 @@
 /*global Promise, google, document, navigator, console, MapLabel, InfoBox, window*/
 
 /** 
- * 
- * PassOff uses BKDF2 to generate salted password and HMAC256 to generate a seed.  The seed is then ued to generate a password based on
-    a chosen template.
  */
 var SMESGMap = function (elementId, options) {
   "use strict";
 
-  var melbourneCenter = new google.maps.LatLng(-37.813942, 144.9711861);
+  var mapState = this.getMapState() || {};
+  var mapCenter;
+
+  if (mapState.lat && mapState.lng) {
+    mapCenter = new google.maps.LatLng(mapState.lat, mapState.lng);
+  } else {
+    //default to centre of melbourne if nothing saved
+    mapCenter = new google.maps.LatLng(-37.813942, 144.9711861);
+  }
 
   this.setupMapStyles();
+  this.mapStyleName = mapState.mapStyleName || "iovation";
 
   options = options || {};
 
   options.mapOptions = options.mapOptions || {
-    center: melbourneCenter,
-    zoom: 15,
+    center: mapCenter,
+    zoom: mapState.zoom || 15,
     mapTypeId: google.maps.MapTypeId.ROADMAP,
 
     mapTypeControl: false,
@@ -35,8 +41,31 @@ var SMESGMap = function (elementId, options) {
     },
     panControl: false,
     rotateControl: false,
-    styles: this.mapStyles.iovation
+    styles: this.mapStyles[this.mapStyleName]
   };
+
+  this.mapOptions = options.mapOptions;
+  this.safariOverrides = options.isSafari;
+  this.markers = [];
+  this.labels = [];
+  this.currentZoom = 1;
+  this.markerIcons = [];
+  this.markerSize = 10;
+  this.markersHidden = false;
+
+  this.map = new google.maps.Map(document.getElementById(elementId), this.mapOptions);
+  this.geocoder = new google.maps.Geocoder();
+  this.infoWindow = new google.maps.InfoWindow();
+  this.infoBox = new InfoBox({
+    content: document.getElementById("infobox"),
+    disableAutoPan: false,
+    maxWidth: 440,
+    pixelOffset: new google.maps.Size(-220, 0),
+    zIndex: 6,
+    closeBoxURL: "",
+    infoBoxClearance: new google.maps.Size(4, 4)
+  });
+
 
   this.mapOptions = options.mapOptions;
 
@@ -57,21 +86,13 @@ var SMESGMap = function (elementId, options) {
     maxWidth: 440,
     pixelOffset: new google.maps.Size(-220, 0),
     zIndex: 6,
-    /*boxStyle: {
-        background: "url('http://google-maps-utility-library-v3.googlecode.com/svn/trunk/infobox/examples/tipbox.gif') no - repeat",
-        opacity: 0.75 //,
-            //width: "280px"
-    },*/
     closeBoxURL: "",
     infoBoxClearance: new google.maps.Size(4, 4)
   });
 
   var self = this;
 
-  /*self.markerClusterer = new MarkerClusterer(self.map, [], {
-    gridSize: 10,
-    maxZoom: 10
-  });*/
+
 
   google.maps.event.addListener(self.map, 'zoom_changed', function () {
     self.checkSizeofMap();
@@ -86,14 +107,12 @@ var SMESGMap = function (elementId, options) {
       }
 
       options.zoomChanged.apply(self, [e]);
-
     });
-
   }
-
 
   google.maps.event.addListener(self.map, 'idle', function () {
     self.refreshMarkers();
+    self.saveMapState();
   });
 
 
@@ -109,10 +128,12 @@ var SMESGMap = function (elementId, options) {
 
   }
 
+
   /* Enable custom styling when the infowindow is displayed*/
   var lInfoBox = self.infoBox;
   google.maps.event.addListener(lInfoBox, 'domready', function () {
     var closeButt = document.getElementById("close-info-box");
+
 
     if (closeButt) {
       closeButt.addEventListener("click", function () {
@@ -125,9 +146,50 @@ var SMESGMap = function (elementId, options) {
   });
 
 
-  //Attempt oto move map to current user coordinates
-  self.geoLocate();
 
+
+};
+
+SMESGMap.prototype.getMapState = function () {
+  "use strict";
+
+  var smesGMap = this;
+  var mapState = {};
+
+
+  if (!window.localStorage) {
+    return mapState;
+  }
+
+  mapState = JSON.parse(window.localStorage.getItem('map-state')) || {};
+
+  return mapState;
+
+};
+
+SMESGMap.prototype.saveMapState = function () {
+  "use strict";
+
+  var smesGMap = this;
+  var mapState = {};
+  var mapCenter = smesGMap.map.getCenter();
+
+  mapState.zoom = smesGMap.getZoom();
+  mapState.mapStyleName = smesGMap.mapStyleName;
+  mapState.lat = mapCenter.lat();
+  mapState.lng = mapCenter.lng();
+
+  if (!window.localStorage) {
+    return;
+  }
+
+
+  try {
+    window.localStorage.setItem('map-state', JSON.stringify(mapState));
+  } catch (e) {
+    //Give up
+    console.log("Write to local storage failed");
+  }
 
 };
 
@@ -202,7 +264,6 @@ SMESGMap.prototype.addMarker = function (marker) {
     nineFigureNo: nineFigureNo,
   });
 
-  //self.markerClusterer.addMarker(mapMarker);
 
 
   mapMarker.addListener('click', function () {
@@ -219,19 +280,11 @@ SMESGMap.prototype.addMarker = function (marker) {
     if (eventListeners && eventListeners.click) {
       eventListeners.click.apply();
     }
-
-    //Make sure that this doesn't fire before the rendering has completed
-    if (eventListeners && eventListeners.domready) {
-      window.setTimeout(function () {
-        eventListeners.domready.apply(this);
-      }, 0);
-    }
-
-
   });
 
 
   self.markers.push(mapMarker);
+
 
 
   //If labels are being displayed, add the label as well
@@ -246,6 +299,8 @@ SMESGMap.prototype.addMarker = function (marker) {
   }
 
 };
+
+
 
 SMESGMap.prototype.updateMarker = function (marker) {
   "use strict";
@@ -274,7 +329,7 @@ SMESGMap.prototype.updateMarker = function (marker) {
   //If a marker was found and defined continue processing
   if (mapMarker) {
     icon = {
-      url: markerIcon + ".svg",
+      url: markerIcon + ".png",
       size: new google.maps.Size(self.markerSize, self.markerSize),
       scaledSize: new google.maps.Size(self.markerSize, self.markerSize)
     };
@@ -370,7 +425,6 @@ SMESGMap.prototype.addLabel = function (label) {
 
 };
 
-
 SMESGMap.prototype.setZoomLevel = function () {
   "use strict";
 
@@ -407,7 +461,6 @@ SMESGMap.prototype.setZoomLevel = function () {
 
 };
 
-
 SMESGMap.prototype.clearLabels = function () {
   "use strict";
 
@@ -421,6 +474,7 @@ SMESGMap.prototype.clearLabels = function () {
   //Truncate the labels array
   self.labels.length = 0;
 };
+
 
 SMESGMap.prototype.refreshMarkers = function () {
   "use strict";
@@ -450,17 +504,6 @@ SMESGMap.prototype.refreshMarkers = function () {
       if (self.markers[markerCounter].isSelected) {
         newSize = newSize * 2;
       }
-
-      //Only update icon if it is not already the correct size
-      if (icon.size.width !== newSize) {
-        //Resize the marker icon
-        icon.scaledSize = new google.maps.Size(newSize, newSize);
-        icon.size = new google.maps.Size(newSize, newSize);
-
-        //Update icon
-        self.markers[markerCounter].setIcon(icon);
-      }
-
       //If the item isn't already being displayed, set the map
       if (!self.markers[markerCounter].map) {
         self.markers[markerCounter].setMap(self.map);
@@ -478,8 +521,6 @@ SMESGMap.prototype.refreshMarkers = function () {
 
     }
   }
-
-
 };
 
 
