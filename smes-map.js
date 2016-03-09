@@ -45,7 +45,8 @@ var SMESGMap = function (elementId, options) {
   this.currentZoom = 1;
   this.markerIcons = [];
   this.markerSize = 10;
-  this.markersHidden = false;
+  this.markersVisible = true;
+  this.labelsVisible = false;
 
   this.map = new google.maps.Map(document.getElementById(elementId), this.mapOptions);
   this.geocoder = new google.maps.Geocoder();
@@ -92,7 +93,7 @@ var SMESGMap = function (elementId, options) {
 
 
   google.maps.event.addListener(self.map, 'idle', function () {
-    self.resizeIcons();
+    self.refreshMarkers();
   });
 
 
@@ -167,7 +168,7 @@ SMESGMap.prototype.addMarker = function (marker) {
 
   //Capture local reference of map for use in click functions
   var self = this;
-  var markerLat, markerLng, markerTitle, markerIcon, nineFigureNo, infoWindowContent, eventListeners;
+  var markerLat, markerLng, markerTitle, markerIcon, nineFigureNo, infoWindowContent, eventListeners, mapReference;
 
   markerLat = marker.lat;
   markerLng = marker.lng;
@@ -176,6 +177,11 @@ SMESGMap.prototype.addMarker = function (marker) {
   nineFigureNo = marker.nineFigureNo;
   infoWindowContent = marker.infoWindowContent;
   eventListeners = marker.eventListeners || null;
+
+  //Check whether marker should be visible on the map or not, only set the mapReference if markers are being displayed
+  if (self.markersVisible) {
+    mapReference = self.map;
+  }
 
 
   var icon = {
@@ -188,7 +194,7 @@ SMESGMap.prototype.addMarker = function (marker) {
   var mapMarker = new google.maps.Marker({
     position: new google.maps.LatLng(markerLat, markerLng),
     title: markerTitle,
-    map: self.map,
+    map: mapReference,
     draggable: false,
     icon: icon,
     animation: google.maps.Animation.DROP,
@@ -227,11 +233,17 @@ SMESGMap.prototype.addMarker = function (marker) {
 
   self.markers.push(mapMarker);
 
-  //Check whether marker should be visible or not
-  if (self.markersHidden) {
-    mapMarker.setMap(null);
-  }
 
+  //If labels are being displayed, add the label as well
+  if (self.labelsVisible) {
+    //Create label and add to nmap
+    var label = {};
+    label.position = new google.maps.LatLng(markerLat, markerLng);
+    markerTitle = marker.title;
+    label.label = marker.title;
+    label.nineFigureNo = marker.nineFigureNo;
+    self.addLabel(label);
+  }
 
 };
 
@@ -339,58 +351,25 @@ SMESGMap.prototype.addLabel = function (label) {
   "use strict";
 
   var self = this;
-  var labelContent, nineFigureNo, labelLat, labelLng;
 
-  labelLat = label.lat;
-  labelLng = label.lng;
-  labelContent = label.label;
-  nineFigureNo = label.nineFigureNo;
-
+  //Only reference the map if this label can be shown now
   var mapLabel = new MapLabel({
-    text: labelContent,
-    position: new google.maps.LatLng(labelLat, labelLng),
+    text: label.label,
+    position: label.position,
     map: self.map,
-    minZoom: 19,
     fontFamily: "'Muli', sans-serif",
     strokeWeight: 6,
     fontColor: 'rgba(28, 43, 139, 0.87)',
     strokeColor: 'rgba(245, 245, 245, 0.87)',
     fontSize: 12,
     align: 'center',
-    nineFigureNo: nineFigureNo
+    nineFigureNo: label.nineFigureNo
   });
 
   self.labels.push(mapLabel);
 
-
 };
 
-SMESGMap.prototype.updateLabel = function (label) {
-  "use strict";
-
-  var self = this;
-  var labelContent, nineFigureNo, labelLat, labelLng;
-  var mapLabel;
-
-  labelLat = label.lat;
-  labelLng = label.lng;
-  labelContent = label.label;
-  nineFigureNo = label.nineFigureNo;
-
-  for (var i = 0; i < self.labels.length; i++) {
-    if (self.labels[i].nineFigureNo === nineFigureNo) {
-      mapLabel = self.labels[i];
-      break;
-    }
-  }
-
-  //If a marker was found and defined continue processing
-  if (mapLabel) {
-    mapLabel.set("text", labelContent);
-    mapLabel.set("position", new google.maps.LatLng(labelLat, labelLng));
-  }
-
-};
 
 SMESGMap.prototype.setZoomLevel = function () {
   "use strict";
@@ -402,15 +381,22 @@ SMESGMap.prototype.setZoomLevel = function () {
   if (!self.zoomLevel || self.zoomLevel !== zoomLevel) {
 
     if (zoomLevel < 14 && (!self.zoomLevel || self.zoomLevel >= 14)) {
-      self.hideMarkers();
-      self.markersHidden = true;
+      //self.hideMarkers();
+      self.markersVisible = false;
     } else if (zoomLevel >= 14 && (!self.zoomLevel || self.zoomLevel < 14)) {
-      self.showMarkers();
+      //self.showMarkers();
     }
 
     if (zoomLevel >= 14) {
       self.markerResizeRequired = true;
-      self.markersHidden = false;
+      self.markersVisible = true;
+    }
+
+    if (zoomLevel >= 19) {
+      self.labelsVisible = true;
+
+    } else {
+      self.labelsVisible = false;
     }
 
   }
@@ -421,80 +407,80 @@ SMESGMap.prototype.setZoomLevel = function () {
 
 };
 
-SMESGMap.prototype.resizeIcons = function () {
+
+SMESGMap.prototype.clearLabels = function () {
   "use strict";
 
-  var icon, newSize;
   var self = this;
+
+  //Disconnect labels from the map
+  for (var i = 0; i < self.labels.length; i++) {
+    self.labels[i].setMap(null);
+  }
+
+  //Truncate the labels array
+  self.labels.length = 0;
+};
+
+SMESGMap.prototype.refreshMarkers = function () {
+  "use strict";
+
+  var icon, newSize, position;
+  var self = this;
+  var bounds = self.map.getBounds();
+
+  //Start by lcearing all labels
+  self.clearLabels();
 
   //Loop through the markers and re-szie their icons
   for (var markerCounter = 0; markerCounter < self.markers.length || 0; markerCounter++) {
-    //Retrieve the marker icon and re-set its size
-    icon = self.markers[markerCounter].icon;
-    newSize = self.markerSize || 14;
+    //Check whether we need to worry about this marker
+    position = self.markers[markerCounter].position;
 
-    if (self.markers[markerCounter].isSelected) {
-      newSize = newSize * 2;
+    //  If markers are not being displayed or this marker isn't in the viewport then make sure it is hidden and move on
+    if (!self.markersVisible || !bounds.contains(position)) {
+      if (self.markers[markerCounter].map) {
+        self.markers[markerCounter].setMap(null);
+      }
+    } else {
+      //Retrieve the marker icon and re-set its size
+      icon = self.markers[markerCounter].icon;
+      newSize = self.markerSize || 14;
+
+      if (self.markers[markerCounter].isSelected) {
+        newSize = newSize * 2;
+      }
+
+      //Only update icon if it is not already the correct size
+      if (icon.size.width !== newSize) {
+        //Resize the marker icon
+        icon.scaledSize = new google.maps.Size(newSize, newSize);
+        icon.size = new google.maps.Size(newSize, newSize);
+
+        //Update icon
+        self.markers[markerCounter].setIcon(icon);
+      }
+
+      //If the item isn't already being displayed, set the map
+      if (!self.markers[markerCounter].map) {
+        self.markers[markerCounter].setMap(self.map);
+      }
+
+      //Check whether the labels are being displayed, if so add to map
+      if (self.labelsVisible) {
+        //Create label and add to nmap
+        var label = {};
+        label.position = position;
+        label.label = self.markers[markerCounter].title;
+        label.nineFigureNo = self.markers[markerCounter].nineFigureNo;
+        self.addLabel(label);
+      }
+
     }
-
-    icon.scaledSize = new google.maps.Size(newSize, newSize);
-    icon.size = new google.maps.Size(newSize, newSize);
-
-    //Update icon
-    self.markers[markerCounter].setIcon(icon);
-  }
-
-};
-
-
-
-
-SMESGMap.prototype.hideMarkers = function () {
-  "use strict";
-
-  var self = this;
-
-  for (var i = 0; i < self.markers.length; i++) {
-    self.markers[i].setMap(null);
-  }
-
-};
-
-SMESGMap.prototype.showMarkers = function () {
-  "use strict";
-
-  var self = this;
-
-  for (var i = 0; i < self.markers.length; i++) {
-    self.markers[i].setMap(self.map);
-  }
-
-};
-
-
-SMESGMap.prototype.hideLabels = function () {
-  "use strict";
-
-  var self = this;
-
-  for (var i = 0; i < self.labels.length; i++) {
-    self.labels[i].set('map', 'null');
   }
 
 
 };
-
-SMESGMap.prototype.showLabels = function () {
-  "use strict";
-
-  var self = this;
-
-  for (var i = 0; i < self.labels.length; i++) {
-    self.labels[i].set('map', self.map);
-  }
-
-};
-
 
 
 SMESGMap.prototype.reverseGeocode = function (cLat, cLng) {

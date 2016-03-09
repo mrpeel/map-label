@@ -134,7 +134,6 @@ function loadMark(surveyMark, loadType) {
   var contentEDiv = '</div></div>';
   var eventListeners = {};
   var marker = {};
-  var label = {};
 
   markType = returnMarkType(surveyMark);
 
@@ -198,20 +197,15 @@ function loadMark(surveyMark, loadType) {
     '</div></div>';
 
 
-  label.lat = surveyMark.latitude;
-  label.lng = surveyMark.longitude;
-  label.label = surveyMark.name;
-  label.nineFigureNo = surveyMark.nineFigureNumber;
-
 
   if (loadType === "new") {
     smesMap.addMarker(marker);
-    smesMap.addLabel(label);
+
 
   } else {
 
     smesMap.updateMarker(marker);
-    smesMap.updateLabel(label);
+
   }
 
 }
