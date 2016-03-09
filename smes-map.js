@@ -175,6 +175,10 @@ SMESGMap.prototype.saveMapState = function () {
   var mapCenter = smesGMap.map.getCenter();
 
   mapState.zoom = smesGMap.getZoom();
+  //Never save a zoom state greater than 18
+  if (mapState.zoom > 18) {
+    mapState.zoom = 18;
+  }
   mapState.mapStyleName = smesGMap.mapStyleName;
   mapState.lat = mapCenter.lat();
   mapState.lng = mapCenter.lng();
@@ -225,7 +229,7 @@ SMESGMap.prototype.getZoom = function () {
  * @return {None}.
  */
 
-SMESGMap.prototype.addMarker = function (marker) {
+SMESGMap.prototype.addMarker = function (marker, loadHidden) {
   "use strict";
 
   //Capture local reference of map for use in click functions
@@ -241,7 +245,7 @@ SMESGMap.prototype.addMarker = function (marker) {
   eventListeners = marker.eventListeners || null;
 
   //Check whether marker should be visible on the map or not, only set the mapReference if markers are being displayed
-  if (self.markersVisible) {
+  if (self.markersVisible && !loadHidden) {
     mapReference = self.map;
   }
 

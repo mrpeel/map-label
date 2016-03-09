@@ -1,4 +1,4 @@
-/* global SMESGMap, dataResponse, document, console, SMESMarkStore, saveAs, window */
+/* global SMESGMap, dataResponse, document, console, SMESMarkStore, saveAs, window, dataLoad */
 
 var smesMap;
 var start, end;
@@ -130,8 +130,19 @@ function displayZoomMessage() {
 
 }
 
+function simulateHeavyLoad() {
 
-function loadMark(surveyMark, loadType) {
+  var dlKeys = Object.keys(dataLoad);
+
+  dlKeys.forEach(function (nineFigureNo) {
+    loadMark(dataLoad[nineFigureNo], "new", true);
+  });
+
+
+}
+
+
+function loadMark(surveyMark, loadType, loadHidden) {
 
   console.log("loadMark: " + surveyMark.nineFigureNumber);
 
@@ -211,13 +222,9 @@ function loadMark(surveyMark, loadType) {
 
 
   if (loadType === "new") {
-    smesMap.addMarker(marker);
-
-
+    smesMap.addMarker(marker, loadHidden);
   } else {
-
     smesMap.updateMarker(marker);
-
   }
 
 
